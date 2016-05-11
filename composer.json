@@ -9,6 +9,7 @@
             "email": "ilham.fuead@gmail.com"
         }
     ],
+    "minimum-stability": "dev",
     "support": {
         "email": "ilham.fuead@gmail.com"
     },
