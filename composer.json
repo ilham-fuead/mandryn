@@ -1,0 +1,24 @@
+{
+    "name": "mandryn/mandryn",
+    "description": "Mandryn Component Library",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mohd Ilhammuddin Bin Mohd Fuead",
+            "email": "ilham.fuead@gmail.com"
+        }
+    ],
+    "support": {
+        "email": "ilham.fuead@gmail.com"
+    },
+    "require": {
+        "php": ">=5.5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mandryn\\db\\": "src/db/",
+            "Mandryn\\db\\constant\\": "src/db/constant/"
+        }
+    }
+}
