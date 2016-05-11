@@ -77,22 +77,7 @@ class Query {
 
         $sqlStatement.="SET " . implode(',', $updateFieldsArray) . ' ';
 
-        $conditionFieldsArray = [];
-
-        foreach ($this->conditionFields as $fld) {
-
-            $appender = ($fld[4] === \Mandryn\db\constant\AppenderOperator::NONE_OPR) ? '' : ($fld[4] . ' ');
-            
-            if ($fld[1] === \Mandryn\db\constant\ConditionType::IS_NULL || $fld[1] === \Mandryn\db\constant\ConditionType::IS_NOT_NULL) {
-                $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]}";
-            } else {
-                if ($fld[3] === \Mandryn\db\constant\DataType::INT) {
-                    $conditionFieldsArray[] = "{$appender}{$fld[0]}{$fld[1]}{$fld[2]}";
-                } else {
-                    $conditionFieldsArray[] = "{$appender}{$fld[0]}{$fld[1]}'{$fld[2]}'";
-                }
-            }
-        }
+        $conditionFieldsArray = $this->getConditionFieldsArray();
 
         $sqlStatement.="WHERE " . implode(' ', $conditionFieldsArray);
 
@@ -102,8 +87,16 @@ class Query {
     private function getDeleteSQL() {
         $sqlStatement = "DELETE FROM {$this->tableName} ";
 
-        $conditionFieldsArray = [];
+        $conditionFieldsArray = $this->getConditionFieldsArray();
 
+        $sqlStatement.="WHERE " . implode(' ', $conditionFieldsArray);
+
+        return $sqlStatement;
+    }
+    
+    private function getConditionFieldsArray(){
+        $conditionFieldsArray = [];
+        
         foreach ($this->conditionFields as $fld) {
 
             $appender = ($fld[4] === \Mandryn\db\constant\AppenderOperator::NONE_OPR) ? '' : ($fld[4] . ' ');
@@ -118,10 +111,7 @@ class Query {
                 }
             }
         }
-
-        $sqlStatement.="WHERE " . implode(' ', $conditionFieldsArray);
-
-        return $sqlStatement;
+        return $conditionFieldsArray;
     }
 
 }
