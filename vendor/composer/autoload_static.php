@@ -25,11 +25,29 @@ class ComposerStaticInit706f68ce76f7982359e0ede768e29246
         ),
     );
 
+    public static $prefixesPsr0 = array (
+        'W' => 
+        array (
+            'Whoops' => 
+            array (
+                0 => __DIR__ . '/..' . '/filp/whoops/src',
+            ),
+        ),
+    );
+
+    public static $classMap = array (
+        'Whoops\\Module' => __DIR__ . '/..' . '/filp/whoops/src/deprecated/Zend/Module.php',
+        'Whoops\\Provider\\Zend\\ExceptionStrategy' => __DIR__ . '/..' . '/filp/whoops/src/deprecated/Zend/ExceptionStrategy.php',
+        'Whoops\\Provider\\Zend\\RouteNotFoundStrategy' => __DIR__ . '/..' . '/filp/whoops/src/deprecated/Zend/RouteNotFoundStrategy.php',
+    );
+
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInit706f68ce76f7982359e0ede768e29246::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInit706f68ce76f7982359e0ede768e29246::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit706f68ce76f7982359e0ede768e29246::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit706f68ce76f7982359e0ede768e29246::$classMap;
 
         }, null, ClassLoader::class);
     }

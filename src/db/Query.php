@@ -11,6 +11,7 @@ class Query {
     public $returnFields;
     public $updateFields;
     public $conditionFields;
+    private $sqlStringType;
 
     public function __construct($QueryType) {
         $this->queryType = $QueryType;
@@ -22,11 +23,11 @@ class Query {
         $this->tableName = $tableName;
     }
 
-    public function setCreateTableEngineType($EngineType) {
+    final public function setCreateTableEngineType($EngineType) {
         $this->tableEngineType = $EngineType;
     }
 
-    public function setCreateTableStructureSQL($sql) {
+    final public function setCreateTableStructureSQL($sql) {
         $this->tableStructureSQL = $sql;
     }
 
@@ -38,7 +39,9 @@ class Query {
         $this->conditionFields[] = array($fieldName, $ConditionType, $value, $DataType, $AppenderOperator);
     }
 
-    public function getQueryString() {
+    public function getQueryString($SqlStringType = \Mandryn\db\constant\SqlStringType::SQL_STRING) {
+        $this->sqlStringType = $SqlStringType;
+
         $sqlStatement = '';
 
         if ($this->queryType === \Mandryn\db\constant\QueryType::CREATE) {
@@ -62,16 +65,22 @@ class Query {
         return $sqlStatement;
     }
 
-    private function getUpdateSQL() {
+    protected function getUpdateSQL() {
         $sqlStatement = "UPDATE {$this->tableName} ";
 
         $updateFieldsArray = [];
 
-        foreach ($this->updateFields as $fld) {
-            if ($fld[2] === \Mandryn\db\constant\DataType::INT) {
-                $updateFieldsArray[] = "{$fld[0]}={$fld[1]}";
-            } else {
-                $updateFieldsArray[] = "{$fld[0]}='{$fld[1]}'";
+        if ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::SQL_STRING) {
+            foreach ($this->updateFields as $fld) {
+                if ($fld[2] === \Mandryn\db\constant\DataType::INT) {
+                    $updateFieldsArray[] = "{$fld[0]}={$fld[1]}";
+                } else {
+                    $updateFieldsArray[] = "{$fld[0]}='{$fld[1]}'";
+                }
+            }
+        } elseif ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::PREPARE_STATEMENT) {
+            foreach ($this->updateFields as $fld) {
+                $updateFieldsArray[] = "{$fld[0]} = :{$fld[0]}";
             }
         }
 
@@ -84,7 +93,7 @@ class Query {
         return $sqlStatement;
     }
 
-    private function getDeleteSQL() {
+    protected function getDeleteSQL() {
         $sqlStatement = "DELETE FROM {$this->tableName} ";
 
         $conditionFieldsArray = $this->getConditionFieldsArray();
@@ -93,21 +102,33 @@ class Query {
 
         return $sqlStatement;
     }
-    
-    private function getConditionFieldsArray(){
-        $conditionFieldsArray = [];
-        
-        foreach ($this->conditionFields as $fld) {
 
-            $appender = ($fld[4] === \Mandryn\db\constant\AppenderOperator::NONE_OPR) ? '' : ($fld[4] . ' ');
-            
-            if ($fld[1] === \Mandryn\db\constant\ConditionType::IS_NULL || $fld[1] === \Mandryn\db\constant\ConditionType::IS_NOT_NULL) {
-                $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]}";
-            } else {
-                if ($fld[3] === \Mandryn\db\constant\DataType::INT) {
-                    $conditionFieldsArray[] = "{$appender}{$fld[0]}{$fld[1]}{$fld[2]}";
+    protected function getConditionFieldsArray() {
+        $conditionFieldsArray = [];
+        if ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::SQL_STRING) {
+            foreach ($this->conditionFields as $fld) {
+
+                $appender = ($fld[4] === \Mandryn\db\constant\AppenderOperator::NONE_OPR) ? '' : ($fld[4] . ' ');
+
+                if ($fld[1] === \Mandryn\db\constant\ConditionType::IS_NULL || $fld[1] === \Mandryn\db\constant\ConditionType::IS_NOT_NULL) {
+                    $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]}";
                 } else {
-                    $conditionFieldsArray[] = "{$appender}{$fld[0]}{$fld[1]}'{$fld[2]}'";
+                    if ($fld[3] === \Mandryn\db\constant\DataType::INT) {
+                        $conditionFieldsArray[] = "{$appender}{$fld[0]}{$fld[1]}{$fld[2]}";
+                    } else {
+                        $conditionFieldsArray[] = "{$appender}{$fld[0]}{$fld[1]}'{$fld[2]}'";
+                    }
+                }
+            }
+        } elseif ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::PREPARE_STATEMENT) {
+            foreach ($this->conditionFields as $fld) {
+
+                $appender = ($fld[4] === \Mandryn\db\constant\AppenderOperator::NONE_OPR) ? '' : ($fld[4] . ' ');
+
+                if ($fld[1] === \Mandryn\db\constant\ConditionType::IS_NULL || $fld[1] === \Mandryn\db\constant\ConditionType::IS_NOT_NULL) {
+                    $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]}";
+                } else {
+                    $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]} :{$fld[0]}";
                 }
             }
         }
