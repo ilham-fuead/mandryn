@@ -42,22 +42,6 @@ class DBQueryi {
             }
         }
         
-        if ($this->preparedQueryObj->queryType === \Mandryn\db\constant\QueryType::SELECT) {
-            foreach ($this->preparedQueryObj->updateFields as $fld) {
-
-                /*  [ 0 - $fieldName ] , [ 1 - $value ] , [ 2 - $DataType ]  */
-
-                $this->paramFields[$fld[0]] = $fld[1];
-
-                if ($fld[2] === \Mandryn\db\constant\DataType::INT) {
-                    $this->statementObj->bindParam(":{$fld[0]}", $this->paramFields[$fld[0]], \PDO::PARAM_INT);
-                } else {
-                    $this->statementObj->bindParam(":{$fld[0]}", $this->paramFields[$fld[0]]);
-                }
-            }
-        }
-
-
         foreach ($this->preparedQueryObj->conditionFields as $fld) {
 
             /*  [ 0 - $fieldName ] , [ 1 - $ConditionType ] , [ 2 - $value ] , [ 3 - $DataType ] , [ 4 - $AppenderOperator ]  */
@@ -72,12 +56,9 @@ class DBQueryi {
         }
     }
 
-    public function setParamNewValue($fieldName, $fieldValue) {
-        foreach ($this->paramFields as $key => $value) {
-
-            if ($key === $fieldName) {
-                $this->paramFields[$fieldName] = $fieldValue;
-            }
+    public function setFieldValue($fieldName, $fieldValue) {
+        if(array_key_exists($fieldName, $this->paramFields)){
+            $this->paramFields[$fieldName]=$fieldValue;
         }
     }
 
