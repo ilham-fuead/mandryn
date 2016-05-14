@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "c55cf1b7494a9563f8e9d673e089ee99",
+    "hash": "2099aaff882e13000398a5355859183f",
     "content-hash": "6223812012d4d9f3a36eb29aae3f92e3",
     "packages": [],
     "packages-dev": [
@@ -61,12 +61,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/debug.git",
-                "reference": "61c2c5bde2c32fdb8e60a03644e99451d7a069c8"
+                "reference": "7f932c43491d7d0f33308c880a2ad4f100804307"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/debug/zipball/61c2c5bde2c32fdb8e60a03644e99451d7a069c8",
-                "reference": "61c2c5bde2c32fdb8e60a03644e99451d7a069c8",
+                "url": "https://api.github.com/repos/symfony/debug/zipball/7f932c43491d7d0f33308c880a2ad4f100804307",
+                "reference": "7f932c43491d7d0f33308c880a2ad4f100804307",
                 "shasum": ""
             },
             "require": {
@@ -83,7 +83,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "3.1-dev"
+                    "dev-master": "3.2-dev"
                 }
             },
             "autoload": {
@@ -110,7 +110,7 @@
             ],
             "description": "Symfony Debug Component",
             "homepage": "https://symfony.com",
-            "time": "2016-05-12 15:59:27"
+            "time": "2016-05-13 18:13:23"
         }
     ],
     "aliases": [],

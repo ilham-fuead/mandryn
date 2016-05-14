@@ -6,7 +6,34 @@
     "authors": [
         {
             "name": "Mohd Ilhammuddin Bin Mohd Fuead",
-            "email": "ilham.fuead@gmail.com"
+            "email": "ilham.fuead@gmail.com",
+            "homepage": "http://www.zend.com/en/yellow-pages/ZEND028169",
+            "role": "Project Lead/Software Engineer"
+        },
+        {
+            "name": "Mohd Fadil Bin Md Sari",
+            "email": "mdfadilmd@gmail.com",
+            "role": "Senior Developer"
+        },
+        {
+            "name": "Fernandez Christie Jasil",
+            "email": "fz111211@gmail.com",
+            "role": "Senior Developer"
+        },
+        {
+            "name": "Mohd Rizuwan Bin Saar",
+            "email": "rizuwan86@gmail.com",
+            "role": "Developer"
+        },        
+        {
+            "name": "Khairul Anuar Bin Hassan",
+            "email": "khairulkl@gmail.com",
+            "role": "Programmer"
+        },        
+        {
+            "name": "A. Rahman Bin Md. Yasim",
+            "email": "k801130r810611@gmail.com",
+            "role": "Programmer"
         }
     ],
     "minimum-stability": "dev",
