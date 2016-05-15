@@ -2,7 +2,7 @@
     "name": "mandryn/mandryn",
     "description": "Mandryn Component Library",
     "type": "library",
-    "license": "MIT",
+    "license": "The Artistic License 2.0",
     "authors": [
         {
             "name": "Mohd Ilhammuddin Bin Mohd Fuead",
