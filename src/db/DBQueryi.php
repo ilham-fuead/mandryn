@@ -78,7 +78,7 @@ class DBQueryi {
         $this->pdoObj=null;
     }
     
-    public static function query($sqlWithPlaceholder,$placeholderNamesValuesArray){
+    public function getQuery($sqlWithPlaceholder,$placeholderNamesValuesArray){
         $statement=$this->pdoObj->prepare($sqlWithPlaceholder);
         
         foreach ($placeholderNamesValuesArray as $placeholder => $value) {
@@ -87,10 +87,22 @@ class DBQueryi {
         
         $statement->execute();
         
-        while ($row=$statement->fetch(\PDO::FETCH_ASSOC)!==false){
+        while (($row=$statement->fetch(\PDO::FETCH_ASSOC))!==false){
             yield $row;
         }
         
     }
+    
+    public function executeNonQuery($sqlWithPlaceholder,$placeholderNamesValuesArray){
+        $statement=$this->pdoObj->prepare($sqlWithPlaceholder);
+        
+        foreach ($placeholderNamesValuesArray as $placeholder => $value) {
+            $statement->bindValue($placeholder, $value);
+        }
+        
+        return $statement->execute();
+        
+    }
+    
 
 }
