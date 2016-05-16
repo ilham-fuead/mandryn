@@ -77,5 +77,20 @@ class DBQueryi {
     public function __destruct() {
         $this->pdoObj=null;
     }
+    
+    public static function query($sqlWithPlaceholder,$placeholderNamesValuesArray){
+        $statement=$this->pdoObj->prepare($sqlWithPlaceholder);
+        
+        foreach ($placeholderNamesValuesArray as $placeholder => $value) {
+            $statement->bindValue($placeholder, $value);
+        }
+        
+        $statement->execute();
+        
+        while ($row=$statement->fetch(\PDO::FETCH_ASSOC)!==false){
+            yield $row;
+        }
+        
+    }
 
 }
