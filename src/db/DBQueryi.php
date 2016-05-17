@@ -78,7 +78,7 @@ class DBQueryi {
         $this->pdoObj=null;
     }
     
-    public function getQuery($sqlWithPlaceholder,$placeholderNamesValuesArray){
+    public function query($sqlWithPlaceholder,$placeholderNamesValuesArray){
         $statement=$this->pdoObj->prepare($sqlWithPlaceholder);
         
         foreach ($placeholderNamesValuesArray as $placeholder => $value) {
