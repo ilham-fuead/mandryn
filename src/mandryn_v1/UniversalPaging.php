@@ -1,5 +1,4 @@
 <?php
-
 class PagingInfo {
 
     public $pagingType;
@@ -86,7 +85,13 @@ abstract class UniversalPaging implements IPagingType {
         $conn = $this->connectionDetailObj;
 
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
-        $DBQueryObj->setSQL_Statement($this->sqlStatement);
+        
+        /**TODO: Original return rows count **/
+        //$DBQueryObj->setSQL_Statement($this->sqlStatement);
+        
+        /**TODO: Experimental faster return rows count **/
+        $DBQueryObj->setSQL_Statement('SELECT COUNT(*) as totalRows FROM (' . $this->sqlStatement . ') as queried_tbl');
+        
         $DBQueryObj->runSQL_Query();
 
         $TotalRowsPerSQL = 0;
@@ -95,7 +100,12 @@ abstract class UniversalPaging implements IPagingType {
         $TotalRowPerPage = $this->pagingInfoObj->totalRowPerPaging;
 
         if (mysqli_num_rows($DBQueryObj->getQueryResult()) > 0) {
-            $TotalRowsPerSQL = mysqli_num_rows($DBQueryObj->getQueryResult());
+            /**TODO: Original return rows count **/
+            //$TotalRowsPerSQL = mysqli_num_rows($DBQueryObj->getQueryResult());
+            
+            /**TODO: Experimental faster return rows count **/
+            $scalar=mysqli_fetch_assoc($DBQueryObj->getQueryResult());
+            $TotalRowsPerSQL=$scalar['totalRows'];
         }
 
         $modValue = 0;

@@ -1,4 +1,5 @@
 <?php
+
 namespace Mandryn\db;
 
 class DBQueryi {
@@ -7,11 +8,13 @@ class DBQueryi {
     private $statementObj;
     private $preparedQueryObj;
     private $paramFields;
-
+    public $affectedRow;
+    
     public function __construct($host, $username, $password, $database_name) {
         $dsn = "mysql:host={$host};dbname={$database_name};port=3306;charset=utf8";
         $this->pdoObj = new \PDO($dsn, $username, $password);
         $this->pdoObj->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $this->affectedRow=0;
     }
 
     public function setQuery(\Mandryn\db\Query $preparedQueryObj) {
@@ -41,7 +44,7 @@ class DBQueryi {
                 }
             }
         }
-        
+
         foreach ($this->preparedQueryObj->conditionFields as $fld) {
 
             /*  [ 0 - $fieldName ] , [ 1 - $ConditionType ] , [ 2 - $value ] , [ 3 - $DataType ] , [ 4 - $AppenderOperator ]  */
@@ -57,8 +60,8 @@ class DBQueryi {
     }
 
     public function setFieldValue($fieldName, $fieldValue) {
-        if(array_key_exists($fieldName, $this->paramFields)){
-            $this->paramFields[$fieldName]=$fieldValue;
+        if (array_key_exists($fieldName, $this->paramFields)) {
+            $this->paramFields[$fieldName] = $fieldValue;
         }
     }
 
@@ -69,40 +72,42 @@ class DBQueryi {
             print $e->getMessage();
         }
     }
-    
-    public function closeConnection(){
-        $this->pdoObj=null;
+
+    public function closeConnection() {
+        $this->pdoObj = null;
     }
 
     public function __destruct() {
-        $this->pdoObj=null;
+        $this->pdoObj = null;
+    }
+
+    public function setCustomSql($sqlWithPlaceholder, $placeholderNamesValues) {
+        $this->statementObj = $this->pdoObj->prepare($sqlWithPlaceholder);
+        
+        if(is_array($placeholderNamesValues)){
+            $this->bindPlaceholderByArray($placeholderNamesValues);
+        }        
     }
     
-    public function query($sqlWithPlaceholder,$placeholderNamesValuesArray){
-        $statement=$this->pdoObj->prepare($sqlWithPlaceholder);
-        
-        foreach ($placeholderNamesValuesArray as $placeholder => $value) {
-            $statement->bindValue($placeholder, $value);
+    private function bindPlaceholderByArray($array){
+        $this->paramFields=[];
+        foreach ($array as $placeholder => $value) {
+            $this->paramFields[$placeholder] = $value;
+            $this->statementObj->bindParam($placeholder, $this->paramFields[$placeholder]);
         }
-        
-        $statement->execute();
-        
-        while (($row=$statement->fetch(\PDO::FETCH_ASSOC))!==false){
+    }
+
+    public function getCustomSqlRecordset() {
+        $this->statementObj->execute();
+        while (($row = $this->statementObj->fetch(\PDO::FETCH_ASSOC)) !== false) {
             yield $row;
         }
-        
     }
-    
-    public function executeNonQuery($sqlWithPlaceholder,$placeholderNamesValuesArray){
-        $statement=$this->pdoObj->prepare($sqlWithPlaceholder);
-        
-        foreach ($placeholderNamesValuesArray as $placeholder => $value) {
-            $statement->bindValue($placeholder, $value);
-        }
-        
-        return $statement->execute();
-        
-    }
-    
 
+    public function executeCustomSqlCommand() {
+        $this->affectedRow=0;
+        $status=$this->statementObj->execute();
+        $this->affectedRow=$this->statementObj->rowCount();
+        return $status;
+    }
 }
