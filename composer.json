@@ -2,7 +2,7 @@
     "name": "mandryn/mandryn",
     "description": "Mandryn Component Library",
     "type": "library",
-    "license": "The Artistic License 2.0",
+    "license": "MIT",
     "authors": [
         {
             "name": "Mohd Ilhammuddin Bin Mohd Fuead",
@@ -41,7 +41,9 @@
         "email": "ilham.fuead@gmail.com"
     },
     "require": {
-        "php": ">=5.5.0"
+        "php": ">=5.5.0",
+        "symfony/process": "^3.0",
+        "guzzlehttp/guzzle": "^6.2"
     },
     "require-dev": {
         "symfony/debug": "^3.0"
