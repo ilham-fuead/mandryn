@@ -52,6 +52,7 @@
         "psr-4": {
             "Mandryn\\db\\": "src/db/",
             "Mandryn\\db\\constant\\": "src/db/constant/",
+            "Mandryn\\http\\": "src/http/",
             "": "src/mandryn_v1/"
         }
     }
