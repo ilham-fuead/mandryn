@@ -33,11 +33,19 @@ class ConcurrentRequest {
     }
 
     public function initPoolRequest() {
-        $this->prepareRequest();
+        //$this->prepareRequest();
+        
+        $requests = function (array $httpUrlObjArray) {
+            foreach ($httpUrlObjArray as $httpUrlObj) {
+                $uri = $httpUrlObj->uri;
+
+                yield new Request('GET', $uri . '?' . http_build_query($httpUrlObj->parametersArray));
+            }
+        };
         
         $httpUrlObjArray=[];
         
-        $pool = new Pool($this->client, $this->requests($this->httpUrlObjArray), [
+        $pool = new Pool($this->client, $requests($this->httpUrlObjArray), [
             'concurrency' => 10,
             'fulfilled' => function ($response, $index) use (&$httpUrlObjArray) {
                 // this is delivered each successful response
