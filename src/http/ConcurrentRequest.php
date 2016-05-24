@@ -18,7 +18,7 @@ class ConcurrentRequest {
         $this->client = new Client();
     }
 
-    public function addUrl($url, array $parametersArray = []) {
+    public function addUrl($uri, array $parametersArray = []) {
         $this->httpUrlObjArray[] = new HttpUrl($uri, $parametersArray);
     }
 
