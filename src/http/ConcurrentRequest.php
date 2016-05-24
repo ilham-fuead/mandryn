@@ -59,7 +59,8 @@ class ConcurrentRequest {
         // Force the pool of requests to complete.
         $promise->wait();
         
-        var_dump($httpUrlObjArray);
+        //var_dump($httpUrlObjArray);
+        return $httpUrlObjArray;
     }
 
 }
