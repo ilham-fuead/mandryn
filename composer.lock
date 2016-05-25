@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "acb9df3fed8d277a66d04cdfba6f647f",
-    "content-hash": "7f418aeb46b8baf0b345cf02b22e0252",
+    "hash": "2d3fd5e9c47186a5f349874795bca57a",
+    "content-hash": "27ecac283b725e6eb7b5d6b4d30e68bc",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -279,6 +279,50 @@
     ],
     "packages-dev": [
         {
+            "name": "phpunit/php-timer",
+            "version": "1.0.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sebastianbergmann/php-timer.git",
+                "reference": "38e9124049cf1a164f1e4537caf19c99bf1eb260"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/38e9124049cf1a164f1e4537caf19c99bf1eb260",
+                "reference": "38e9124049cf1a164f1e4537caf19c99bf1eb260",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4|~5"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Bergmann",
+                    "email": "sb@sebastian-bergmann.de",
+                    "role": "lead"
+                }
+            ],
+            "description": "Utility class for timing",
+            "homepage": "https://github.com/sebastianbergmann/php-timer/",
+            "keywords": [
+                "timer"
+            ],
+            "time": "2016-05-12 18:03:57"
+        },
+        {
             "name": "psr/log",
             "version": "dev-master",
             "source": {
@@ -331,12 +375,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/debug.git",
-                "reference": "7f932c43491d7d0f33308c880a2ad4f100804307"
+                "reference": "28ce1b215ab42960e7ebdd14baab045dba5d058a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/debug/zipball/7f932c43491d7d0f33308c880a2ad4f100804307",
-                "reference": "7f932c43491d7d0f33308c880a2ad4f100804307",
+                "url": "https://api.github.com/repos/symfony/debug/zipball/28ce1b215ab42960e7ebdd14baab045dba5d058a",
+                "reference": "28ce1b215ab42960e7ebdd14baab045dba5d058a",
                 "shasum": ""
             },
             "require": {
@@ -380,7 +424,7 @@
             ],
             "description": "Symfony Debug Component",
             "homepage": "https://symfony.com",
-            "time": "2016-05-13 18:13:23"
+            "time": "2016-05-24 10:08:27"
         }
     ],
     "aliases": [],
