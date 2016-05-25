@@ -162,9 +162,9 @@ abstract class UniversalPaging implements IPagingType {
 
             if ($generate_tbl) {
                 $cmd1 = "CREATE TABLE {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used WHERE 1=2;";
-                $cmd2 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
-                $cmd3 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
-
+                $cmd2 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
+                $cmd3 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
+                
                 if ($this->executeTableLevelCommand($DBQueryObj, $cmd1, 'cmd1 err : ' . $cmd1)) {
                     if ($this->executeTableLevelCommand($DBQueryObj, $cmd2, 'cmd2 err')) {
                         if ($this->executeTableLevelCommand($DBQueryObj, $cmd3, 'cmd3 err')) {
