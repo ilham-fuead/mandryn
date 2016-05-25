@@ -12,14 +12,22 @@ class ConcurrentRequest {
     private $httpUrlObjArray;
     private $client;
     private $requests;
+    private $maxConcurrentRequest;
 
-    public function __construct() {
+    public function __construct($maxConcurrentRequest=10) {
         $this->httpUrlObjArray = [];
         $this->client = new Client();
+        $this->maxConcurrentRequest=$maxConcurrentRequest;
     }
 
     public function addUrl($uri, array $parametersArray = []) {
         $this->httpUrlObjArray[] = new HttpUrl($uri, $parametersArray);
+    }
+    
+    public function getUrlListArray(){
+        foreach($this->httpUrlObjArray as $httpUrlObj){
+            yield $httpUrlObj->uri . ((sizeof($httpUrlObj->parametersArray)>0)?'?':'') . http_build_query($httpUrlObj->parametersArray);
+        }
     }
 
     private function prepareRequest() {
@@ -46,7 +54,7 @@ class ConcurrentRequest {
         $httpUrlObjArray=[];
         
         $pool = new Pool($this->client, $requests($this->httpUrlObjArray), [
-            'concurrency' => 10,
+            'concurrency' => $this->maxConcurrentRequest,
             'fulfilled' => function ($response, $index) use (&$httpUrlObjArray) {
                 // this is delivered each successful response
                 $body = $response->getBody();
