@@ -7,6 +7,7 @@ class PagingInfo {
     public $totalRowPerPaging;
     public $totalPage;
     public $memTableName;
+    public $lastPage;
 
     public function __construct() {
         $this->pagingType = 0;
@@ -14,6 +15,7 @@ class PagingInfo {
         $this->totalRowPerPaging = 0;
         $this->totalPage = 0;
         $this->memTableName = '';
+        $this->lastPage=0;
     }
 
 }
@@ -67,6 +69,10 @@ abstract class UniversalPaging implements IPagingType {
         $this->initPageProperty();
         return $this->pagingInfoObj;
     }
+    
+    public function getPagingInfoObj(){
+        return $this->pagingInfoObj;
+    }
 
     public function setSQLStatement($sqlStatement) {
        $this->sqlStatement = $sqlStatement;
@@ -95,6 +101,40 @@ abstract class UniversalPaging implements IPagingType {
         $conn = $this->connectionDetailObj;
 
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
+        
+        // TODO: Construct Memory Table
+        if ($this->useMemoryTable && $this->pagingInfoObj->memTableName=='') {
+            
+
+
+            $arr = ['i', 'l', 'h', 'a', 'm', '29', '01', '1979'];
+            $tblName = 'tbl_mem_' . $arr[rand(0, 7)] . $arr[rand(0, 7)];
+            $generate_tbl = false;
+
+            $cmdSetting1 = 'SET GLOBAL tmp_table_size = 40894464 * 4'; //40MB * 4
+            $cmdSetting2 = 'SET GLOBAL max_heap_table_size = 16777216 * 4'; //16MB * 4
+
+            if ($this->executeTableLevelCommand($DBQueryObj, $cmdSetting1, 'cmdSetting1 err')) {
+                if ($this->executeTableLevelCommand($DBQueryObj, $cmdSetting2, 'cmdSetting2 err')) {
+                    $generate_tbl = true;
+                }
+            }
+
+            if ($generate_tbl) {
+                $cmd1 = "CREATE TABLE {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used WHERE 1=2;";
+                $cmd2 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
+                $cmd3 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
+                
+                if ($this->executeTableLevelCommand($DBQueryObj, $cmd1, 'cmd1 err : ' . $cmd1)) {
+                    if ($this->executeTableLevelCommand($DBQueryObj, $cmd2, 'cmd2 err')) {
+                        if ($this->executeTableLevelCommand($DBQueryObj, $cmd3, 'cmd3 err')) {
+                            $this->pagingInfoObj->memTableName = $tblName;
+                            $this->sqlStatement="SELECT * FROM {$tblName}";
+                        }
+                    }
+                }
+            }
+        }
 
         /*         * TODO: Original return rows count * */
         $DBQueryObj->setSQL_Statement($this->sqlStatement);
@@ -142,38 +182,7 @@ abstract class UniversalPaging implements IPagingType {
             $this->pagingInfoObj->totalRow = 0;
             $this->pagingInfoObj->totalPage = 0;
         }
-
-        if ($this->useMemoryTable && $this->pagingInfoObj->memTableName=='') {
-            // TODO: Memory table upgrade
-
-
-            $arr = ['i', 'l', 'h', 'a', 'm', '29', '01', '1979'];
-            $tblName = 'tbl_mem_' . $arr[rand(0, 7)] . $arr[rand(0, 7)];
-            $generate_tbl = false;
-
-            $cmdSetting1 = 'SET GLOBAL tmp_table_size = 40894464 * 4'; //40MB * 4
-            $cmdSetting2 = 'SET GLOBAL max_heap_table_size = 16777216 * 4'; //16MB * 4
-
-            if ($this->executeTableLevelCommand($DBQueryObj, $cmdSetting1, 'cmdSetting1 err')) {
-                if ($this->executeTableLevelCommand($DBQueryObj, $cmdSetting2, 'cmdSetting2 err')) {
-                    $generate_tbl = true;
-                }
-            }
-
-            if ($generate_tbl) {
-                $cmd1 = "CREATE TABLE {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used WHERE 1=2;";
-                $cmd2 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
-                $cmd3 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
-                
-                if ($this->executeTableLevelCommand($DBQueryObj, $cmd1, 'cmd1 err : ' . $cmd1)) {
-                    if ($this->executeTableLevelCommand($DBQueryObj, $cmd2, 'cmd2 err')) {
-                        if ($this->executeTableLevelCommand($DBQueryObj, $cmd3, 'cmd3 err')) {
-                            $this->pagingInfoObj->memTableName = $tblName;
-                        }
-                    }
-                }
-            }
-        }
+        
         unset($DBQueryObj);
     }
 
@@ -191,6 +200,11 @@ abstract class UniversalPaging implements IPagingType {
     public function setPageProperty($obj) {
         $this->pagingInfoObj->totalRow = $obj->totalRow;
         $this->pagingInfoObj->totalPage = $obj->totalPage;
+        if(isset($obj->lastPage)){
+            $this->pagingInfoObj->lastPage=$obj->lastPage;
+        }else{
+            $this->pagingInfoObj->lastPage=0;
+        }
         if($obj->memTableName!=''){
             $this->pagingInfoObj->memTableName=$obj->memTableName;
             $this->sqlStatement="SELECT * FROM {$obj->memTableName}";
@@ -205,9 +219,10 @@ abstract class UniversalPaging implements IPagingType {
             $this->renderPaging(1);
         } else {
             $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty
+            //$this->renderPagingWithoutPageProperty($setCurrentPage);
         }
     }
-
+    
     private function renderPaging($setCurrentPage) {
         $testing = 0;
         $conn = $this->connectionDetailObj;
@@ -288,6 +303,72 @@ abstract class UniversalPaging implements IPagingType {
 
             $this->renderPaging($setCurrentPage);
         }
+    }
+    
+    private function renderPagingWithoutPageProperty($setCurrentPage) {
+        
+        $conn = $this->connectionDetailObj;
+        $currentPage = $setCurrentPage;
+        $offSetToZeroIndex = 1;
+        
+        //BETA
+        $TotalPage =100;
+        
+        $TotalRowPerPage = $this->pagingInfoObj->totalRowPerPaging;
+
+        if ($this->pagingInfoObj->lastPage!=1) {
+            if ($currentPage == 1) {
+                $startRow = ($currentPage - 1) * $TotalRowPerPage;
+            } else {
+                $startRow = ($currentPage - 1) * $TotalRowPerPage;
+            }
+            $endRow = ($currentPage * $TotalRowPerPage) - $offSetToZeroIndex;
+        } else {
+            $startRow = ($currentPage - 1) * $TotalRowPerPage;
+            //$endRow = $this->pagingInfoObj->totalRow - $offSetToZeroIndex;
+            $endRow = 0;
+        }
+
+
+        $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
+
+        $limitRow = $this->pagingInfoObj->totalRowPerPaging;
+
+        $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
+        
+        $DBQueryObj->runSQL_Query();
+
+        $rowCnt=mysqli_num_rows($DBQueryObj->getQueryResult());
+        
+        if ($rowCnt>0) {
+        
+            $this->performTaskOnEachPage($DBQueryObj, $startRow, $endRow);
+            
+            if($rowCnt<$this->pagingInfoObj->totalRowPerPaging){
+                $this->pagingInfoObj->lastPage=1;
+            }
+            /*
+            elseif($rowCnt==$this->pagingInfoObj->totalRowPerPaging){
+                $startRow=$startRow+$this->pagingInfoObj->totalRowPerPaging;
+                $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
+                $DBQueryObj->runSQL_Query();
+            
+                if(!$DBQueryObj->isHavingRecordRow()){
+                    $this->pagingInfoObj->lastPage=1;
+                }
+            }
+             * 
+             */
+            unset($DBQueryObj);
+        } else {
+            $this->pagingInfoObj->lastPage=1;
+            $this->handleTaskOnNoPaging();
+        }
+        
+    }
+    
+    public function getLastPageStatus(){
+        return $this->pagingInfoObj->lastPage;
     }
 
     public function setPagingDelay($seconds = 0) {
