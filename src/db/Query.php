@@ -37,7 +37,7 @@ class Query {
     public function setSelectField($fieldName) {
         $nums = func_num_args();
 
-        if ($num === 1) {
+        if ($nums === 1) {
             $this->selectFields[] = $fieldName;
         } elseif ($num > 1) {
             $this->selectFields = array_merge($this->selectFields, func_get_args());
