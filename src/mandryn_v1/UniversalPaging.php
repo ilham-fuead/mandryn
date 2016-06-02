@@ -122,8 +122,9 @@ abstract class UniversalPaging implements IPagingType {
 
             if ($generate_tbl) {
                 $cmd1 = "CREATE TABLE {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used WHERE 1=2;";
-                $cmd2 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
-                $cmd3 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
+                $cmd2 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
+                $cmd3 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
+                
                 
                 if ($this->executeTableLevelCommand($DBQueryObj, $cmd1, 'cmd1 err : ' . $cmd1)) {
                     if ($this->executeTableLevelCommand($DBQueryObj, $cmd2, 'cmd2 err')) {
@@ -181,6 +182,9 @@ abstract class UniversalPaging implements IPagingType {
         } else {
             $this->pagingInfoObj->totalRow = 0;
             $this->pagingInfoObj->totalPage = 0;
+            if($this->useMemoryTable===true && $this->pagingInfoObj->memTableName!=''){
+                $this->clearMemoryTable($this->pagingInfoObj->memTableName,$DBQueryObj);
+            }
         }
         
         unset($DBQueryObj);
@@ -195,6 +199,12 @@ abstract class UniversalPaging implements IPagingType {
         } else {
             throw new Exception($customErrorString);
         }
+    }
+    
+    private function clearMemoryTable($memTableName,DBQuery $DBQueryObj) {
+        //TODO: (Method) Clear memory table 
+        $cmdSql="DROP TABLE {$memTableName};";
+        $ok=$this->executeTableLevelCommand($DBQueryObj, $cmdSql, 'Error clean up mem engine');
     }
 
     public function setPageProperty($obj) {
@@ -287,8 +297,7 @@ abstract class UniversalPaging implements IPagingType {
         //TODO:Clear memory table
         if ($setCurrentPage == $this->pagingInfoObj->totalPage) {
             if ($this->pagingInfoObj->memTableName !== '') {
-                $cmdSql="DROP TABLE {$this->pagingInfoObj->memTableName};";
-                $ok=$this->executeTableLevelCommand(new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name), $cmdSql, 'Error clean up mem engine');
+                $this->clearMemoryTable($this->pagingInfoObj->memTableName, new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name));
             }
         }
         
@@ -416,5 +425,3 @@ abstract class UniversalPaging implements IPagingType {
  * 2)Method handleTaskOnNoPaging : will perform customized instruction when no recordset available to page.
  */
 ?>
-
-
