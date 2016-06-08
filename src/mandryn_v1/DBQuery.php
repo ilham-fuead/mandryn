@@ -146,6 +146,16 @@ class DBQuery extends DB {
     public function fetchRow($resulttype=MYSQLI_ASSOC) {
         return mysqli_fetch_array($this->db_result,$resulttype);
     }
+    
+    public function getRowsInJSON(){
+        $rows=[];
+        foreach ($this->yieldRow() as $row){
+            $rows[]=$row;
+        }
+        $rowsJSON=json_encode($rows);
+        unset($rows);
+        return $rowsJSON;
+    }
 
     public function isHavingRecordRow() {
         if ($this->commandType == "query") {
