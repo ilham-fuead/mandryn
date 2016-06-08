@@ -47,7 +47,7 @@ class DB {
         $this->closeLink();
         try {
             if (!($this->db_link = mysqli_connect($this->db_host, $this->db_username, $this->db_password, $this->db_name))) {
-                throw new Exception("Connection Error : " . mysqli_connect_errno() . " - " . mysqli_connect_error() . " - {$this->db_password}");
+                throw new Exception("Connection Error : " . mysqli_connect_errno() . " - " . mysqli_connect_error());
             }
         } catch (Exception $e) {
             die($e->getMessage());
@@ -99,29 +99,32 @@ class DBQuery extends DB {
         $this->db_sql = $sql;
     }
 
-    public function runSQL_Query() {
+    private function performQuery() {
         $this->db_result = mysqli_query($this->db_link, $this->db_sql);
+    }
+
+    public function runSQL_Query() {
+        $this->performQuery();
         if (is_bool($this->db_result)) {
             $this->commandType = "non query";
-            if (DBQuery::MODE == 'DEV' && $this->db_result === FALSE) {               
-                    echo 'SQL: ' . $this->db_sql;
-                    echo '<br>Database error: ' . mysqli_error($this->db_link) . "\n";               
+            if (DBQuery::MODE == 'DEV' && $this->db_result === FALSE) {
+                echo 'SQL: ' . $this->db_sql;
+                echo '<br>Database error: ' . mysqli_error($this->db_link) . "\n";
             }
-        }else{
+        } else {
             $this->commandType = "query";
         }
     }
 
     public function executeNon_Query() {
-        //$this->runSQL_Query();
-        $this->db_result = mysqli_query($this->db_link, $this->db_sql);
+        $this->performQuery();
         $this->commandType = "non query";
     }
 
     public function getQueryResult() {
         if ($this->commandType == "query") {
             return $this->db_result;
-        }else{
+        } else {
             throw new Exception('No recordset returned!');
         }
     }
@@ -129,28 +132,32 @@ class DBQuery extends DB {
     public function getCommandStatus() {
         if ($this->commandType == "non query") {
             return $this->db_result;
-        }else{
+        } else {
             throw new Exception('No command status returned, instead a recordset is returned');
         }
+    }
+
+    public function yieldRow($resulttype=MYSQLI_ASSOC) {
+        while ($row = mysqli_fetch_array($this->db_result,$resulttype)) {
+            yield $row;
+        }
+    }
+
+    public function fetchRow($resulttype=MYSQLI_ASSOC) {
+        return mysqli_fetch_array($this->db_result,$resulttype);
     }
 
     public function isHavingRecordRow() {
         if ($this->commandType == "query") {
             if (mysqli_num_rows($this->db_result) > 0) {
                 return TRUE;
-            } else{
+            } else {
                 return FALSE;
             }
         }
     }
 
-    public function __destruct() {
-        $this->freeRecordset();
-        parent::__destruct();
-        unset($this->db_sql_params);
-    }
-    
-    public function getSqlString(){
+    public function getSqlString() {
         return $this->db_sql;
     }
 
@@ -160,6 +167,12 @@ class DBQuery extends DB {
                 mysqli_free_result($this->db_result);
             }
         }
+    }
+
+    public function __destruct() {
+        $this->freeRecordset();
+        parent::__destruct();
+        unset($this->db_sql_params);
     }
 
 }
