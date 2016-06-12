@@ -58,6 +58,10 @@ class DBCommand{
         $this->DBQueryObj->setSQL_Statement($sql);
         $this->DBQueryObj->executeNon_Query();
     }
+    
+    public function getExecutionStatus(){
+        return $this->DBQueryObj->getCommandStatus();
+    }
 
     public function getAffectedRowCount(){
         return mysqli_affected_rows($this->DBQueryObj->getLink());
