@@ -15,7 +15,7 @@ class PagingInfo {
         $this->totalRowPerPaging = 0;
         $this->totalPage = 0;
         $this->memTableName = '';
-        $this->lastPage=0;
+        $this->lastPage = 0;
     }
 
 }
@@ -54,6 +54,7 @@ abstract class UniversalPaging implements IPagingType {
     private $sqlStatement;
     protected $mixedDataTypeArray;
     private $useMemoryTable;
+    private $useBlindMode;
 
     const USE_MEM_ENG = true;
     const USE_DISK_ENG = false;
@@ -69,20 +70,20 @@ abstract class UniversalPaging implements IPagingType {
         $this->initPageProperty();
         return $this->pagingInfoObj;
     }
-    
-    public function getPagingInfoObj(){
+
+    public function getPagingInfoObj() {
         return $this->pagingInfoObj;
     }
 
     public function setSQLStatement($sqlStatement) {
-       $this->sqlStatement = $sqlStatement;
+        $this->sqlStatement = $sqlStatement;
     }
 
     public function setUseTmpMemEng() {
         
     }
 
-    public function setPagingProperty($IPagingType, $rowPerPage, $UNIVERSAL_PAGING_USE_MEMORY_TABLE = false) {
+    public function setPagingProperty($IPagingType, $rowPerPage, $UNIVERSAL_PAGING_USE_MEMORY_TABLE = false, $UNIVERSAL_PAGING_USE_BLIND_MODE = false) {
         $this->pagingInfoObj->pagingType = $IPagingType;
         $this->pagingInfoObj->totalRowPerPaging = $rowPerPage;
         $this->useMemoryTable = $UNIVERSAL_PAGING_USE_MEMORY_TABLE;
@@ -101,10 +102,10 @@ abstract class UniversalPaging implements IPagingType {
         $conn = $this->connectionDetailObj;
 
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
-        
+
         // TODO: Construct Memory Table
-        if ($this->useMemoryTable && $this->pagingInfoObj->memTableName=='') {
-            
+        if ($this->useMemoryTable && $this->pagingInfoObj->memTableName == '') {
+
 
 
             $arr = ['i', 'l', 'h', 'a', 'm', '29', '01', '1979'];
@@ -124,69 +125,74 @@ abstract class UniversalPaging implements IPagingType {
                 $cmd1 = "CREATE TABLE {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used WHERE 1=2;";
                 $cmd2 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
                 $cmd3 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
-                
-                
+
+
                 if ($this->executeTableLevelCommand($DBQueryObj, $cmd1, 'cmd1 err : ' . $cmd1)) {
                     if ($this->executeTableLevelCommand($DBQueryObj, $cmd2, 'cmd2 err')) {
                         if ($this->executeTableLevelCommand($DBQueryObj, $cmd3, 'cmd3 err')) {
                             $this->pagingInfoObj->memTableName = $tblName;
-                            $this->sqlStatement="SELECT * FROM {$tblName}";
+                            $this->sqlStatement = "SELECT * FROM {$tblName}";
                         }
                     }
                 }
             }
         }
 
-        /*         * TODO: Original return rows count * */
-        $DBQueryObj->setSQL_Statement($this->sqlStatement);
-
-        /*         * TODO: Experimental faster return rows count * */
-        //$DBQueryObj->setSQL_Statement('SELECT COUNT(*) as totalRows FROM (' . $this->sqlStatement . ') as joined_tbl');
-
-        $DBQueryObj->runSQL_Query();
-
-        $TotalRowsPerSQL = 0;
-        $TotalPage = 0;
-
-        $TotalRowPerPage = $this->pagingInfoObj->totalRowPerPaging;
-
-        if (mysqli_num_rows($DBQueryObj->getQueryResult()) > 0) {
+        if ($this->useBlindMode === false) {
             /*             * TODO: Original return rows count * */
-            $TotalRowsPerSQL = mysqli_num_rows($DBQueryObj->getQueryResult());
+            $DBQueryObj->setSQL_Statement($this->sqlStatement);
 
             /*             * TODO: Experimental faster return rows count * */
-            //$scalar=mysqli_fetch_assoc($DBQueryObj->getQueryResult());
-            //$TotalRowsPerSQL=$scalar['totalRows'];
-        }
+            //$DBQueryObj->setSQL_Statement('SELECT COUNT(*) as totalRows FROM (' . $this->sqlStatement . ') as joined_tbl');
 
-        $modValue = 0;
+            $DBQueryObj->runSQL_Query();
 
-        if ($TotalRowsPerSQL > 0) {
-            if ($TotalRowsPerSQL > $TotalRowPerPage) {
-                $TotalPage = intval($TotalRowsPerSQL / $TotalRowPerPage);
-                $modValue = $TotalRowsPerSQL % $TotalRowPerPage;
-                if ($modValue != 0) {
-                    $TotalPage++;
+            $TotalRowsPerSQL = 0;
+            $TotalPage = 0;
+
+            $TotalRowPerPage = $this->pagingInfoObj->totalRowPerPaging;
+
+            if (mysqli_num_rows($DBQueryObj->getQueryResult()) > 0) {
+                /*                 * TODO: Original return rows count * */
+                $TotalRowsPerSQL = mysqli_num_rows($DBQueryObj->getQueryResult());
+
+                /*                 * TODO: Experimental faster return rows count * */
+                //$scalar=mysqli_fetch_assoc($DBQueryObj->getQueryResult());
+                //$TotalRowsPerSQL=$scalar['totalRows'];
+            }
+
+            $modValue = 0;
+
+            if ($TotalRowsPerSQL > 0) {
+                if ($TotalRowsPerSQL > $TotalRowPerPage) {
+                    $TotalPage = intval($TotalRowsPerSQL / $TotalRowPerPage);
+                    $modValue = $TotalRowsPerSQL % $TotalRowPerPage;
+                    if ($modValue != 0) {
+                        $TotalPage++;
+                    }
+                } else {
+                    $TotalPage = 1;
                 }
+                if ($testing) {
+                    echo 'Total Record: ' . $TotalRowsPerSQL . '<p>';
+                    echo 'Total Row/Page: ' . $TotalRowPerPage . '<p>';
+                    echo 'Total Page: ' . $TotalPage . '<p>';
+                    echo 'Mod Value(extra field): ' . $modValue . '<p>';
+                }
+                $this->pagingInfoObj->totalRow = $TotalRowsPerSQL;
+                $this->pagingInfoObj->totalPage = $TotalPage;
             } else {
-                $TotalPage = 1;
+                $this->pagingInfoObj->totalRow = 0;
+                $this->pagingInfoObj->totalPage = 0;
+                if ($this->useMemoryTable === true && $this->pagingInfoObj->memTableName != '') {
+                    $this->clearMemoryTable($this->pagingInfoObj->memTableName, $DBQueryObj);
+                }
             }
-            if ($testing) {
-                echo 'Total Record: ' . $TotalRowsPerSQL . '<p>';
-                echo 'Total Row/Page: ' . $TotalRowPerPage . '<p>';
-                echo 'Total Page: ' . $TotalPage . '<p>';
-                echo 'Mod Value(extra field): ' . $modValue . '<p>';
-            }
-            $this->pagingInfoObj->totalRow = $TotalRowsPerSQL;
-            $this->pagingInfoObj->totalPage = $TotalPage;
         } else {
             $this->pagingInfoObj->totalRow = 0;
             $this->pagingInfoObj->totalPage = 0;
-            if($this->useMemoryTable===true && $this->pagingInfoObj->memTableName!=''){
-                $this->clearMemoryTable($this->pagingInfoObj->memTableName,$DBQueryObj);
-            }
+            $this->pagingInfoObj->lastPage = 0;
         }
-        
         unset($DBQueryObj);
     }
 
@@ -200,42 +206,42 @@ abstract class UniversalPaging implements IPagingType {
             throw new Exception($customErrorString);
         }
     }
-    
-    private function clearMemoryTable($memTableName,DBQuery $DBQueryObj) {
+
+    private function clearMemoryTable($memTableName, DBQuery $DBQueryObj) {
         //TODO: (Method) Clear memory table 
-        $cmdSql="DROP TABLE {$memTableName};";
-        $ok=$this->executeTableLevelCommand($DBQueryObj, $cmdSql, 'Error clean up mem engine');
+        $cmdSql = "DROP TABLE {$memTableName};";
+        $ok = $this->executeTableLevelCommand($DBQueryObj, $cmdSql, 'Error clean up mem engine');
     }
 
     public function setPageProperty($obj) {
         $this->pagingInfoObj->totalRow = $obj->totalRow;
         $this->pagingInfoObj->totalPage = $obj->totalPage;
-        if(isset($obj->lastPage)){
-            $this->pagingInfoObj->lastPage=$obj->lastPage;
-        }else{
-            $this->pagingInfoObj->lastPage=0;
+        if (isset($obj->lastPage)) {
+            $this->pagingInfoObj->lastPage = $obj->lastPage;
+        } else {
+            $this->pagingInfoObj->lastPage = 0;
         }
-        if($obj->memTableName!=''){
-            $this->pagingInfoObj->memTableName=$obj->memTableName;
-            $this->sqlStatement="SELECT * FROM {$obj->memTableName}";
+        if ($obj->memTableName != '') {
+            $this->pagingInfoObj->memTableName = $obj->memTableName;
+            $this->sqlStatement = "SELECT * FROM {$obj->memTableName}";
         }
     }
 
-    public function startPaging($setCurrentPage,$isNotBlindMode=true) {
+    public function startPaging($setCurrentPage, $isNotBlindMode = true) {
         // Paging Type : 1 auto/virtual || 2 manual
         //$this->initPageProperty();
         if ($this->pagingInfoObj->pagingType == 1) {
             $this->initPageProperty(); //automatic calculation bit slow
             $this->renderPaging(1);
         } else {
-            if($isNotBlindMode){
+            if ($isNotBlindMode) {
                 $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty
-            }else{
+            } else {
                 $this->renderPagingWithoutPageProperty($setCurrentPage);
             }
         }
     }
-    
+
     private function renderPaging($setCurrentPage) {
         $testing = 0;
         $conn = $this->connectionDetailObj;
@@ -296,7 +302,7 @@ abstract class UniversalPaging implements IPagingType {
         } else {
             $this->handleTaskOnNoPaging();
         }
-        
+
         //TODO:Clear memory table
         if ($setCurrentPage == $this->pagingInfoObj->totalPage) {
             if ($this->pagingInfoObj->memTableName !== '') {
@@ -305,7 +311,7 @@ abstract class UniversalPaging implements IPagingType {
                 //$ok=$this->executeTableLevelCommand(new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name), $cmdSql, 'Error clean up mem engine');
             }
         }
-        
+
         $setCurrentPage+=1;
 
         if ($setCurrentPage <= $this->pagingInfoObj->totalPage && $this->pagingInfoObj->pagingType == 1) {
@@ -318,19 +324,19 @@ abstract class UniversalPaging implements IPagingType {
             $this->renderPaging($setCurrentPage);
         }
     }
-    
+
     private function renderPagingWithoutPageProperty($setCurrentPage) {
-        
+
         $conn = $this->connectionDetailObj;
         $currentPage = $setCurrentPage;
         $offSetToZeroIndex = 1;
-        
+
         //BETA
-        $TotalPage =100;
-        
+        $TotalPage = 100;
+
         $TotalRowPerPage = $this->pagingInfoObj->totalRowPerPaging;
 
-        if ($this->pagingInfoObj->lastPage!=1) {
+        if ($this->pagingInfoObj->lastPage != 1) {
             if ($currentPage == 1) {
                 $startRow = ($currentPage - 1) * $TotalRowPerPage;
             } else {
@@ -347,41 +353,43 @@ abstract class UniversalPaging implements IPagingType {
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
 
         $limitRow = $this->pagingInfoObj->totalRowPerPaging;
+        if($this->useBlindMode===false){
+            $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
+        }else{
+            $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $limitRow");
+        }
 
-        $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
-        
         $DBQueryObj->runSQL_Query();
 
-        $rowCnt=mysqli_num_rows($DBQueryObj->getQueryResult());
-        
-        if ($rowCnt>0) {
-        
+        $rowCnt = mysqli_num_rows($DBQueryObj->getQueryResult());
+
+        if ($rowCnt > 0) {
+
             $this->performTaskOnEachPage($DBQueryObj, $startRow, $endRow);
-            
-            if($rowCnt<$this->pagingInfoObj->totalRowPerPaging){
-                $this->pagingInfoObj->lastPage=1;
+
+            if ($rowCnt < $this->pagingInfoObj->totalRowPerPaging) {
+                $this->pagingInfoObj->lastPage = 1;
             }
             /*
-            elseif($rowCnt==$this->pagingInfoObj->totalRowPerPaging){
-                $startRow=$startRow+$this->pagingInfoObj->totalRowPerPaging;
-                $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
-                $DBQueryObj->runSQL_Query();
-            
-                if(!$DBQueryObj->isHavingRecordRow()){
-                    $this->pagingInfoObj->lastPage=1;
-                }
-            }
+              elseif($rowCnt==$this->pagingInfoObj->totalRowPerPaging){
+              $startRow=$startRow+$this->pagingInfoObj->totalRowPerPaging;
+              $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
+              $DBQueryObj->runSQL_Query();
+
+              if(!$DBQueryObj->isHavingRecordRow()){
+              $this->pagingInfoObj->lastPage=1;
+              }
+              }
              * 
              */
             unset($DBQueryObj);
         } else {
-            $this->pagingInfoObj->lastPage=1;
+            $this->pagingInfoObj->lastPage = 1;
             $this->handleTaskOnNoPaging();
         }
-        
     }
-    
-    public function getLastPageStatus(){
+
+    public function getLastPageStatus() {
         return $this->pagingInfoObj->lastPage;
     }
 
