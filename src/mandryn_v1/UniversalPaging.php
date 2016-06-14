@@ -87,6 +87,7 @@ abstract class UniversalPaging implements IPagingType {
         $this->pagingInfoObj->pagingType = $IPagingType;
         $this->pagingInfoObj->totalRowPerPaging = $rowPerPage;
         $this->useMemoryTable = $UNIVERSAL_PAGING_USE_MEMORY_TABLE;
+        $this->useBlindMode = $UNIVERSAL_PAGING_USE_BLIND_MODE;
     }
 
     public function setPagingType($IPagingType) {
