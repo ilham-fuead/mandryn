@@ -232,18 +232,19 @@ abstract class UniversalPaging implements IPagingType {
         }
     }
 
-    public function startPaging($setCurrentPage, $isNotBlindMode = true) {
+    public function startPaging($setCurrentPage) {
         // Paging Type : 1 auto/virtual || 2 manual
         //$this->initPageProperty();
         if ($this->pagingInfoObj->pagingType == 1) {
             $this->initPageProperty(); //automatic calculation bit slow
             $this->renderPaging(1);
         } else {
-            if ($isNotBlindMode) {
-                $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty
+            if ($this->useBlindMode===false) {
+                $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty                
             } else {
                 $this->renderPagingWithoutPageProperty($setCurrentPage);
             }
+           
         }
     }
 
