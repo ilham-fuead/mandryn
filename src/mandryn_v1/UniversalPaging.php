@@ -124,16 +124,18 @@ abstract class UniversalPaging implements IPagingType {
             }
 
             if ($generate_tbl) {
+                $cmd0 = "drop table if exists {$tblName};";
                 $cmd1 = "CREATE TABLE {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used WHERE 1=2;";
                 $cmd2 = "ALTER TABLE {$tblName} ENGINE=MEMORY;";
                 $cmd3 = "INSERT INTO {$tblName} SELECT * FROM {$this->sqlStatement} AS tbl_used;";
 
-
-                if ($this->executeTableLevelCommand($DBQueryObj, $cmd1, 'cmd1 err : ' . $cmd1)) {
-                    if ($this->executeTableLevelCommand($DBQueryObj, $cmd2, 'cmd2 err')) {
-                        if ($this->executeTableLevelCommand($DBQueryObj, $cmd3, 'cmd3 err')) {
-                            $this->pagingInfoObj->memTableName = $tblName;
-                            $this->sqlStatement = "SELECT * FROM {$tblName}";
+                if ($this->executeTableLevelCommand($DBQueryObj, $cmd0, 'cmd0 err')) {
+                    if ($this->executeTableLevelCommand($DBQueryObj, $cmd1, 'cmd1 err : ' . $cmd1)) {
+                        if ($this->executeTableLevelCommand($DBQueryObj, $cmd2, 'cmd2 err')) {
+                            if ($this->executeTableLevelCommand($DBQueryObj, $cmd3, 'cmd3 err')) {
+                                $this->pagingInfoObj->memTableName = $tblName;
+                                $this->sqlStatement = "SELECT * FROM {$tblName}";
+                            }
                         }
                     }
                 }
@@ -239,12 +241,11 @@ abstract class UniversalPaging implements IPagingType {
             $this->initPageProperty(); //automatic calculation bit slow
             $this->renderPaging(1);
         } else {
-            if ($this->useBlindMode===false) {
+            if ($this->useBlindMode === false) {
                 $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty                
             } else {
                 $this->renderPagingWithoutPageProperty($setCurrentPage);
             }
-           
         }
     }
 
