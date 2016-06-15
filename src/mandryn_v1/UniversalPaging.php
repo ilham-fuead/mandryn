@@ -58,6 +58,7 @@ abstract class UniversalPaging implements IPagingType {
 
     const USE_MEM_ENG = true;
     const USE_DISK_ENG = false;
+    const TBL_NAME_PREPEND = 'tbl_mem_';
 
     public function __construct(DBQuery $DBQueryObj) {
         $this->connectionDetailObj = $DBQueryObj->getConnectionDetail();
@@ -209,9 +210,12 @@ abstract class UniversalPaging implements IPagingType {
     }
 
     private function clearMemoryTable($memTableName, DBQuery $DBQueryObj) {
-        //TODO: (Method) Clear memory table 
-        $cmdSql = "DROP TABLE {$memTableName};";
-        $ok = $this->executeTableLevelCommand($DBQueryObj, $cmdSql, 'Error clean up mem engine');
+        //TODO: (Method) Clear memory table
+
+        if (substr_compare($memTableName, TBL_NAME_PREPEND, 0, 8) === 0) {
+            $cmdSql = "DROP TABLE {$memTableName};";
+            $ok = $this->executeTableLevelCommand($DBQueryObj, $cmdSql, 'Error clean up mem engine');
+        }
     }
 
     public function setPageProperty($obj) {
@@ -354,9 +358,9 @@ abstract class UniversalPaging implements IPagingType {
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
 
         $limitRow = $this->pagingInfoObj->totalRowPerPaging;
-        if($this->useBlindMode===false){
+        if ($this->useBlindMode === false) {
             $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
-        }else{
+        } else {
             $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $limitRow");
         }
 
