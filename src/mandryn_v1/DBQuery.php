@@ -1,13 +1,15 @@
 <?php
 
-class ConnectionDetail {
+class ConnectionDetail
+{
 
     public $host;
     public $username;
     public $password;
     public $database_name;
 
-    public function __construct($host, $username, $password, $database_name) {
+    public function __construct($host, $username, $password, $database_name)
+    {
         $this->host = $host;
         $this->username = $username;
         $this->password = $password;
@@ -16,7 +18,8 @@ class ConnectionDetail {
 
 }
 
-class DB {
+class DB
+{
 
     private $db_host;
     private $db_username;
@@ -25,49 +28,59 @@ class DB {
     protected $db_link;
     private $connInfo;
 
-    public function __construct($host, $username, $password, $database_name) {
+    public function __construct($host, $username, $password, $database_name)
+    {
         $this->setLinkProperties($host, $username, $password, $database_name);
         $this->openLink();
         //$this->setMinum();
     }
 
-    public function setLinkProperties($host, $username, $password, $database_name) {
+    public function setLinkProperties($host, $username, $password, $database_name)
+    {
         $this->db_host = $host;
         $this->db_username = $username;
         $this->db_password = $password;
         $this->db_name = $database_name;
     }
 
-    public function getConnectionDetail() {
+    public function getConnectionDetail()
+    {
         $this->connInfo = new ConnectionDetail($this->db_host, $this->db_username, $this->db_password, $this->db_name);
         return $this->connInfo;
     }
 
-    private function openLink() {
+    private function openLink()
+    {
         $this->closeLink();
         try {
             if (!($this->db_link = mysqli_connect($this->db_host, $this->db_username, $this->db_password, $this->db_name))) {
                 throw new Exception("Connection Error : " . mysqli_connect_errno() . " - " . mysqli_connect_error());
             }
         } catch (Exception $e) {
-            die($e->getMessage());
+            header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
+            exit;
+            //die($e->getMessage());
         }
     }
 
-    public function getLink() {
+    public function getLink()
+    {
         return $this->db_link;
     }
 
-    private function closeLink() {
+    private function closeLink()
+    {
         if ($this->db_link)
             mysqli_close($this->db_link);
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->closeLink();
     }
 
-    private function setMinum() {
+    private function setMinum()
+    {
         echo '<h4>Error occured while trying to connect mysql resource pooling.</h4><br>
           Please review below mentioned recommendation for rectification action:<p>
           
@@ -80,7 +93,8 @@ class DB {
 
 }
 
-class DBQuery extends DB {
+class DBQuery extends DB
+{
 
     const MODE = 'DEV'; // DEV||PROD
 
@@ -89,39 +103,56 @@ class DBQuery extends DB {
     private $db_result;
     private $commandType;
 
-    public function __construct($host, $username, $password, $database_name) {
+    public function __construct($host, $username, $password, $database_name)
+    {
         parent::__construct($host, $username, $password, $database_name);
         $this->db_sql_params = array();
     }
 
-    public function setSQL_Statement($sql) {
+    public function setSQL_Statement($sql)
+    {
         $this->freeRecordset();
         $this->db_sql = $sql;
     }
 
-    private function performQuery() {
+    private function performQuery()
+    {
         $this->db_result = mysqli_query($this->db_link, $this->db_sql);
     }
 
-    public function runSQL_Query() {
+    public function runSQL_Query()
+    {
         $this->performQuery();
-        if (is_bool($this->db_result)) {
-            $this->commandType = "non query";
-            if (DBQuery::MODE == 'DEV' && $this->db_result === FALSE) {
-                echo 'SQL: ' . $this->db_sql;
-                echo '<br>Database error: ' . mysqli_error($this->db_link) . "\n";
+        try {
+            if (is_bool($this->db_result)) {
+                $this->commandType = "non query";
+                if (DBQuery::MODE == 'DEV' && $this->db_result === FALSE) {
+                    $errMsg = 'Database error: ' . mysqli_error($this->db_link);
+                    $errMsg .= ', SQL: ' . $this->db_sql;
+                    throw new Exception($errMsg);
+                } else if ($this->db_result === FALSE) {
+                    $errMsg = 'Database error: ' . mysqli_error($this->db_link);
+                    throw new Exception($errMsg);
+                } else {
+                    $this->db_result = mysqli_query($this->db_link, $this->db_sql);
+                }
+            } else {
+                $this->commandType = "query";
             }
-        } else {
-            $this->commandType = "query";
+        }catch (Exception $e) {
+            header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
+            exit;
         }
     }
 
-    public function executeNon_Query() {
+    public function executeNon_Query()
+    {
         $this->performQuery();
         $this->commandType = "non query";
     }
 
-    public function getQueryResult() {
+    public function getQueryResult()
+    {
         if ($this->commandType == "query") {
             return $this->db_result;
         } else {
@@ -129,7 +160,8 @@ class DBQuery extends DB {
         }
     }
 
-    public function getCommandStatus() {
+    public function getCommandStatus()
+    {
         if ($this->commandType == "non query") {
             return $this->db_result;
         } else {
@@ -137,27 +169,31 @@ class DBQuery extends DB {
         }
     }
 
-    public function yieldRow($resulttype=MYSQLI_ASSOC) {
-        while ($row = mysqli_fetch_array($this->db_result,$resulttype)) {
+    public function yieldRow($resulttype = MYSQLI_ASSOC)
+    {
+        while ($row = mysqli_fetch_array($this->db_result, $resulttype)) {
             yield $row;
         }
     }
 
-    public function fetchRow($resulttype=MYSQLI_ASSOC) {
-        return mysqli_fetch_array($this->db_result,$resulttype);
+    public function fetchRow($resulttype = MYSQLI_ASSOC)
+    {
+        return mysqli_fetch_array($this->db_result, $resulttype);
     }
-    
-    public function getRowsInJSON(){
-        $rows=[];
-        foreach ($this->yieldRow() as $row){
-            $rows[]=$row;
+
+    public function getRowsInJSON()
+    {
+        $rows = [];
+        foreach ($this->yieldRow() as $row) {
+            $rows[] = $row;
         }
-        $rowsJSON=json_encode($rows);
+        $rowsJSON = json_encode($rows);
         unset($rows);
         return $rowsJSON;
     }
 
-    public function isHavingRecordRow() {
+    public function isHavingRecordRow()
+    {
         if ($this->commandType == "query") {
             if (mysqli_num_rows($this->db_result) > 0) {
                 return TRUE;
@@ -167,11 +203,13 @@ class DBQuery extends DB {
         }
     }
 
-    public function getSqlString() {
+    public function getSqlString()
+    {
         return $this->db_sql;
     }
 
-    private function freeRecordset() {
+    private function freeRecordset()
+    {
         if ($this->commandType == "query") {
             if ($this->db_result && !is_bool($this->db_result)) {
                 mysqli_free_result($this->db_result);
@@ -179,7 +217,8 @@ class DBQuery extends DB {
         }
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->freeRecordset();
         parent::__destruct();
         unset($this->db_sql_params);
