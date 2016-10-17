@@ -395,5 +395,4 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
     abstract protected function setRedirectFiles();
 
     abstract protected function isAuthenticated($usename, $password);
-
 }

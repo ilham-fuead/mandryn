@@ -128,10 +128,9 @@ class DBQuery extends DB
                 $this->commandType = "non query";
                 if (DBQuery::MODE == 'DEV' && $this->db_result === FALSE) {
                     $errMsg = 'Database error: ' . mysqli_error($this->db_link);
-                    $errMsg .= ', SQL: ' . $this->db_sql;
                     throw new Exception($errMsg);
                 } else if ($this->db_result === FALSE) {
-                    $errMsg = 'Database error: ' . mysqli_error($this->db_link);
+                    $errMsg = 'Database error';
                     throw new Exception($errMsg);
                 } else {
                     $this->db_result = mysqli_query($this->db_link, $this->db_sql);
