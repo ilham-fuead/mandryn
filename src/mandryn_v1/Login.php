@@ -111,7 +111,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
                 exit;
             }
         } else {
-            header("{$_SERVER['SERVER_PROTOCOL']} 401 Unauthorized");
+            header("{$_SERVER['SERVER_PROTOCOL']} 403 Unauthorized");
             exit;
         }
     }
@@ -135,7 +135,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
             }
         } else {
             if ($this->httpResponseAction === IAuthenticationAction::SET_HTTP_RESPONSE_HEADER) {
-                header("{$_SERVER['SERVER_PROTOCOL']} 401 Unauthorized");
+                header("{$_SERVER['SERVER_PROTOCOL']} 403 Unauthorized");
                 exit;
             } else {
                 return FALSE;
@@ -241,17 +241,14 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
         $this->authenticationStatus = FALSE;
 
         if ($this->getInSessionStatus() == TRUE) {
+            session_regenerate_id(true);
             session_unset();
             session_destroy();
             session_write_close();
             setcookie(session_name(), '', 0, '/');
-            session_regenerate_id(true);
             $this->setRedirectFiles();
         }
-        if ($this->httpResponseAction === IAuthenticationAction::SET_HTTP_RESPONSE_HEADER) {
-            header("{$_SERVER['SERVER_PROTOCOL']} 202 Accepted");
-            exit;
-        } else {
+        if ($this->httpResponseAction === IAuthenticationAction::REDIRECT) {
             $this->redirect("out");
         }
 
@@ -286,7 +283,11 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
     private function securingBySession()
     {
         if ($this->getInSessionStatus() == FALSE) {
-            $this->redirect(IRedirectType::MISSING_SESSION_TYPE);
+            if($this->httpResponseAction == IAuthenticationAction::REDIRECT){
+                $this->redirect(IRedirectType::MISSING_SESSION_TYPE);
+            }else if($this->httpResponseAction == IAuthenticationAction::SET_HTTP_RESPONSE_HEADER){
+                header("{$_SERVER['SERVER_PROTOCOL']} 403 Unauthorized");exit;
+            }
         }
         return TRUE;
     }
