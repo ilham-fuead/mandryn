@@ -111,7 +111,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
                 exit;
             }
         } else {
-            header("{$_SERVER['SERVER_PROTOCOL']} 403 Unauthorized");
+            header("{$_SERVER['SERVER_PROTOCOL']} 401 Unauthorized");
             exit;
         }
     }
@@ -135,7 +135,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
             }
         } else {
             if ($this->httpResponseAction === IAuthenticationAction::SET_HTTP_RESPONSE_HEADER) {
-                header("{$_SERVER['SERVER_PROTOCOL']} 403 Unauthorized");
+                header("{$_SERVER['SERVER_PROTOCOL']} 401 Unauthorized");
                 exit;
             } else {
                 return FALSE;
@@ -286,7 +286,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
             if($this->httpResponseAction == IAuthenticationAction::REDIRECT){
                 $this->redirect(IRedirectType::MISSING_SESSION_TYPE);
             }else if($this->httpResponseAction == IAuthenticationAction::SET_HTTP_RESPONSE_HEADER){
-                header("{$_SERVER['SERVER_PROTOCOL']} 403 Unauthorized");exit;
+                header("{$_SERVER['SERVER_PROTOCOL']} 401 Unauthorized");exit;
             }
         }
         return TRUE;
@@ -295,7 +295,11 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
     private function securingByRoles($pageID)
     {
         if ($this->getUserPageAuthorization($this->getIDpengguna(), $pageID) == FALSE) {
-            $this->redirect(IRedirectType::RESTRICT_ACCESS_TYPE);
+            if($this->httpResponseAction == IAuthenticationAction::REDIRECT){
+                $this->redirect(IRedirectType::RESTRICT_ACCESS_TYPE);
+            }else if($this->httpResponseAction == IAuthenticationAction::SET_HTTP_RESPONSE_HEADER){
+                header("{$_SERVER['SERVER_PROTOCOL']} 403 Forbidden");exit;
+            }
         }
         return TRUE;
     }
