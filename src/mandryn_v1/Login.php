@@ -64,11 +64,11 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
     private $jawatan;
     private $userDetails;
     private $authenticationStatus;
-    private $dbQueryObj;
     private $tableName;
     private $idField;
     private $pwdField;
     private $byRightAuthorization;
+    protected $dbQueryObj;
     protected $afterLogOutPage;
     protected $afterLogInPage;
     protected $notInSessionPage;
