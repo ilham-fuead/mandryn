@@ -183,12 +183,12 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
         $_SESSION['authorisedPageRight'] = $authorisedPageRight;
     }
 
-    private function addUserDetail($key, $value)
+    protected function addUserDetail($key, $value)
     {
         $this->userDetails[$key] = $value;
     }
 
-    protected function sessionizedUserDetails(){
+    protected function sessionizeUserDetails(){
         foreach ($this->userDetails as $key=>$value){
             $_SESSION[$key]=$value;
         }
