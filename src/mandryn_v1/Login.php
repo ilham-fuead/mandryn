@@ -194,34 +194,6 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
         }
     }
 
-    public function loadUserDetail($uName)
-    {
-        $SQLQueryObj = new SQLQuery();
-        $SQLQueryObj->setSELECTQuery('pengguna');
-        $SQLQueryObj->addReturnField('IDpengguna');
-        $SQLQueryObj->addReturnField('katalaluan');
-        $SQLQueryObj->addReturnField('nama');
-        $SQLQueryObj->addReturnField('emel');
-        $SQLQueryObj->addReturnField('unit');
-        $SQLQueryObj->addReturnField('jawatan');
-        $SQLQueryObj->addConditionField('IDpengguna', $uName, IFieldType::STRING_TYPE, IConditionOperator::NONE);
-
-        $this->dbQueryObj->setSQL_Statement($SQLQueryObj->getSQLQuery());
-        $this->dbQueryObj->runSQL_Query();
-
-        if (mysqli_num_rows($this->dbQueryObj->getQueryResult()) > 0) {
-
-            $row = mysqli_fetch_assoc($this->dbQueryObj->getQueryResult());
-
-            $this->userName = $row['IDpengguna'];
-            $this->nama = $row['nama'];
-            $this->emel = $row['emel'];
-            $this->unit = $row['unit'];
-            $this->jawatan = $row['jawatan'];
-        }
-
-    }
-
     public function getIDpengguna()
     {
         return $this->userName;
@@ -406,4 +378,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
     abstract protected function setRedirectFiles();
 
     abstract protected function isAuthenticated($usename, $password);
+
+    abstract public function loadUserDetail($uName);
+
 }
