@@ -193,6 +193,10 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
         }
     }
 
+    public function JSONnizeUserDetails(){
+        return json_encode($this->userDetails);
+    }
+
     public function getIDpengguna()
     {
         return $this->userName;
