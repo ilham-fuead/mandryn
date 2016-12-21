@@ -115,7 +115,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
         }
     }
 
-    private function setAuthenticate($uName)
+    protected function setAuthenticate($uName)
     {
         $this->userName = $uName;
         $this->authenticationStatus = TRUE;
