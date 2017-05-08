@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Create universal object and handle on-the-fly properties
  *
@@ -33,30 +34,32 @@ class MagicObject {
     public function __isset($name) {
         return isset($name);
     }
-    
+
     /**
      * 
      * @param array $array
      * @param boolean $disposeSource
      */
-    public function copyArrayProperties(array &$array,$disposeSource=false){
-        foreach ($array as $key=>$value){
-            $this->property[$key]=$value;
-        }
-        
-        if($disposeSource){
-            unset($array);
+    public function copyArrayProperties(array &$array, $disposeSource = false) {
+        if (is_array($array)) {
+            foreach ($array as $key => $value) {
+                $this->property[$key] = $value;
+            }
+
+            if ($disposeSource) {
+                unset($array);
+            }
         }
     }
- 
+
     public function getJsonString() {
-       return json_encode($this->property);
+        return json_encode($this->property);
     }
-    
+
     public function __unset($name) {
         unset($name);
     }
-    
+
     public function __destruct() {
         unset($this->property);
     }

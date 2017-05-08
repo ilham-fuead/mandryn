@@ -45,7 +45,7 @@ class MagicInput extends MagicObject{
         /*2nd parameter supply true to convert request as input array, false as input object*/
         $input = json_decode($request, true);
         
-        if($apply_sanitize){
+        if($apply_sanitize && is_array($input)){
            $input=filter_var_array($input,FILTER_SANITIZE_STRING); 
         }
         
