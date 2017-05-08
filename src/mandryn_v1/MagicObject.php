@@ -1,5 +1,17 @@
 <?php
-
+/**
+ * Create universal object and handle on-the-fly properties
+ *
+ * Create object with on-the-fly properties
+ *
+ * @category   Utility
+ * @package    Mandryn/Mandryn
+ * @author     Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
+ * @copyright  2017-2022 The Mandryn Team
+ * @license    http://www.php.net/license/3_01.txt  PHP License 3.01
+ * @version    Release: 1.1.0
+ * @since      Class available since Release 2.0.0
+ */
 class MagicObject {
 
     private $property;
@@ -21,22 +33,32 @@ class MagicObject {
     public function __isset($name) {
         return isset($name);
     }
-
-    public function getJsonString() {
-        $jsonStr='{';
-        foreach ($this->property as $key=>$val){
-            if($jsonStr!='{'){
-                $jsonStr.=',';
-            }
-            $jsonStr.="\"$key\":\"$val\"";
+    
+    /**
+     * 
+     * @param array $array
+     * @param boolean $disposeSource
+     */
+    public function copyArrayProperties(array &$array,$disposeSource=false){
+        foreach ($array as $key=>$value){
+            $this->property[$key]=$value;
         }
-        $jsonStr.='}';
         
-        return $jsonStr;
+        if($disposeSource){
+            unset($array);
+        }
     }
-
+ 
+    public function getJsonString() {
+       return json_encode($this->property);
+    }
+    
     public function __unset($name) {
         unset($name);
+    }
+    
+    public function __destruct() {
+        unset($this->property);
     }
 
 }
