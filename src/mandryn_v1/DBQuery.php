@@ -96,7 +96,7 @@ class DB
 class DBQuery extends DB
 {
     const MODE = 'DEV'; // DEV||PROD
-    const MAX_TOTAL_INSTANCE=5;
+    const MAX_TOTAL_INSTANCE=3;
     
     private static $totalInstance=0;
 
@@ -105,10 +105,10 @@ class DBQuery extends DB
     private $db_result;
     private $commandType;
     
-    public function __construct($host, $username, $password, $database_name, $limitTotalInstance=true)
+    public function __construct($host, $username, $password, $database_name, $is_DB_connection_limit_enforce=true)
     {        
         try{
-            if(DBQuery::$totalInstance>=DBQuery::MAX_TOTAL_INSTANCE && $limitTotalInstance){
+            if(DBQuery::$totalInstance>=DBQuery::MAX_TOTAL_INSTANCE && $is_DB_connection_limit_enforce){
                 $errMsg = 'DBQuery error : Maximum connection limit exceeded!';
                 throw new Exception($errMsg);
             }
@@ -122,6 +122,10 @@ class DBQuery extends DB
         DBQuery::$totalInstance+=1;
     }
     
+    public static function getTotalInstanceCount(){
+        return DBQuery::$totalInstance;
+    }
+
     public function setSQL_Statement($sql)
     {
         $this->freeRecordset();
