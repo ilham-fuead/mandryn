@@ -70,8 +70,10 @@ class DB
 
     private function closeLink()
     {
-        if ($this->db_link)
+        if ($this->db_link){
             mysqli_close($this->db_link);
+        }
+            
     }
 
     public function __destruct()
