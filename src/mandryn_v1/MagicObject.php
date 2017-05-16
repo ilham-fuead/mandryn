@@ -55,6 +55,10 @@ class MagicObject {
     public function getJsonString() {
         return json_encode($this->property);
     }
+    
+    public function toArray(){
+        return $this->property;
+    }
 
     public function __unset($name) {
         unset($name);
