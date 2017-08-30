@@ -1,6 +1,7 @@
 <?php
 
-class PagingInfo {
+class PagingInfo
+{
 
     public $pagingType;
     public $totalRow;
@@ -9,7 +10,8 @@ class PagingInfo {
     public $memTableName;
     public $lastPage;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->pagingType = 0;
         $this->totalRow = 0;
         $this->totalRowPerPaging = 0;
@@ -17,36 +19,36 @@ class PagingInfo {
         $this->memTableName = '';
         $this->lastPage = 0;
     }
-
 }
 
-interface IPagingType {
+interface IPagingType
+{
 
     const AUTO_VIRTUAL = 1;
     const MANUAL = 2;
-
 }
 
 /**
  * An abstract class to facilitate recordset paging. This ABSTRACT class MUST be extended.
- * 
+ *
  * Support two type of recordset paging:
  * <ol>
  * <li>Virtual/In-memory/Automatic recursion paging : paging will start from 0 index to last page index.</li>
  * <li>Conventional/Manual setting paging : using page index no as input.</li>
- * </ol> 
+ * </ol>
  * Support two abstract method implementation:
  * <ol>
  * <li>Method performTaskOnEachPage : will perform customized instruction when each page rendered.</li>
  * <li>Method handleTaskOnNoPaging : will perform customized instruction when no recordset available to page.</li>
  * </ol>
- * 
+ *
  * @version 1.0
  * @category Database, Recordset Manipulation
  * @author Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
- * @copyright Copyright(c) 2011, Mandryn Team 
+ * @copyright Copyright(c) 2011, Mandryn Team
  */
-abstract class UniversalPaging implements IPagingType {
+abstract class UniversalPaging implements IPagingType
+{
 
     private $connectionDetailObj;
     private $pagingInfoObj;
@@ -60,56 +62,61 @@ abstract class UniversalPaging implements IPagingType {
     const USE_DISK_ENG = false;
     const TBL_NAME_PREPEND = 'tbl_mem_';
 
-    public function __construct(DBQuery $DBQueryObj) {
+    public function __construct(DBQuery $DBQueryObj)
+    {
         $this->connectionDetailObj = $DBQueryObj->getConnectionDetail();
         $this->pagingInfoObj = new PagingInfo();
         $this->mixedDataTypeArray = new MixedDataTypeContainer();
         unset($DBQueryObj);
     }
 
-    public function getPagingInfo() {
+    public function getPagingInfo()
+    {
         $this->initPageProperty();
         return $this->pagingInfoObj;
     }
 
-    public function getPagingInfoObj() {
+    public function getPagingInfoObj()
+    {
         return $this->pagingInfoObj;
     }
 
-    public function setSQLStatement($sqlStatement) {
+    public function setSQLStatement($sqlStatement)
+    {
         $this->sqlStatement = $sqlStatement;
     }
 
-    public function setUseTmpMemEng() {
-        
+    public function setUseTmpMemEng()
+    {
     }
 
-    public function setPagingProperty($IPagingType, $rowPerPage=0, $UNIVERSAL_PAGING_USE_MEMORY_TABLE = false, $UNIVERSAL_PAGING_USE_BLIND_MODE = false) {
+    public function setPagingProperty($IPagingType, $rowPerPage = 0, $UNIVERSAL_PAGING_USE_MEMORY_TABLE = false, $UNIVERSAL_PAGING_USE_BLIND_MODE = false)
+    {
         $this->pagingInfoObj->pagingType = $IPagingType;
         $this->pagingInfoObj->totalRowPerPaging = $rowPerPage;
         $this->useMemoryTable = $UNIVERSAL_PAGING_USE_MEMORY_TABLE;
         $this->useBlindMode = $UNIVERSAL_PAGING_USE_BLIND_MODE;
     }
 
-    public function setPagingType($IPagingType) {
+    public function setPagingType($IPagingType)
+    {
         $this->pagingInfoObj->pagingType = $IPagingType;
     }
 
-    public function setRowPerPage($noOfRowsPerPage) {
+    public function setRowPerPage($noOfRowsPerPage)
+    {
         $this->pagingInfoObj->totalRowPerPaging = $noOfRowsPerPage;
     }
 
-    private function initPageProperty() {
-        $testing = FALSE;
+    private function initPageProperty()
+    {
+        $testing = false;
         $conn = $this->connectionDetailObj;
 
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
 
         // TODO: Construct Memory Table
         if ($this->useMemoryTable && $this->pagingInfoObj->memTableName == '') {
-
-
-
             $arr = ['i', 'l', 'h', 'a', 'm', '29', '01', '1979'];
             $tblName = 'tbl_mem_' . $arr[rand(0, 7)] . $arr[rand(0, 7)];
             $generate_tbl = false;
@@ -200,7 +207,8 @@ abstract class UniversalPaging implements IPagingType {
         unset($DBQueryObj);
     }
 
-    private function executeTableLevelCommand(DBQuery $DBQueryObj, $cmdSql, $customErrorString = 'DB setup failed execution.') {
+    private function executeTableLevelCommand(DBQuery $DBQueryObj, $cmdSql, $customErrorString = 'DB setup failed execution.')
+    {
         $DBQueryObj->setSQL_Statement($cmdSql);
         $DBQueryObj->executeNon_Query();
 
@@ -211,7 +219,8 @@ abstract class UniversalPaging implements IPagingType {
         }
     }
 
-    private function clearMemoryTable($memTableName, DBQuery $DBQueryObj) {
+    private function clearMemoryTable($memTableName, DBQuery $DBQueryObj)
+    {
         //TODO: (Method) Clear memory table
 
         if (substr_compare($memTableName, TBL_NAME_PREPEND, 0, 8) === 0) {
@@ -220,7 +229,8 @@ abstract class UniversalPaging implements IPagingType {
         }
     }
 
-    public function setPageProperty($obj) {
+    public function setPageProperty($obj)
+    {
         $this->pagingInfoObj->totalRow = $obj->totalRow;
         $this->pagingInfoObj->totalPage = $obj->totalPage;
         if (isset($obj->lastPage)) {
@@ -234,22 +244,29 @@ abstract class UniversalPaging implements IPagingType {
         }
     }
 
-    public function startPaging($setCurrentPage) {
+    public function startPaging($setCurrentPage)
+    {
         // Paging Type : 1 auto/virtual || 2 manual
         //$this->initPageProperty();
         if ($this->pagingInfoObj->pagingType == 1) {
             $this->initPageProperty(); //automatic calculation bit slow
-            $this->renderPaging(1);
+            if (!$this->useBlindMode) {
+                $this->renderPaging(1);
+            } else {
+                echo 'blind mode';
+                $this->renderPagingWithoutPageProperty($setCurrentPage);
+            }
         } else {
             if ($this->useBlindMode === false) {
-                $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty                
+                $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty
             } else {
                 $this->renderPagingWithoutPageProperty($setCurrentPage);
             }
         }
     }
 
-    private function renderPaging($setCurrentPage) {
+    private function renderPaging($setCurrentPage)
+    {
         $testing = 0;
         $conn = $this->connectionDetailObj;
         $currentPage = $setCurrentPage;
@@ -332,8 +349,9 @@ abstract class UniversalPaging implements IPagingType {
         }
     }
 
-    private function renderPagingWithoutPageProperty($setCurrentPage) {
-
+    private function renderPagingWithoutPageProperty($setCurrentPage)
+    {
+        echo 'currentPage : ' . $setCurrentPage;
         $conn = $this->connectionDetailObj;
         $currentPage = $setCurrentPage;
         $offSetToZeroIndex = 1;
@@ -360,18 +378,21 @@ abstract class UniversalPaging implements IPagingType {
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
 
         $limitRow = $this->pagingInfoObj->totalRowPerPaging;
-        if ($this->useBlindMode === false) {
-            $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
-        } else {
-            $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $limitRow");
-        }
 
+        // if ($this->useBlindMode === false) {
+        //     $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
+        // } else {
+        //     $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $limitRow");
+        // }
+
+        $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
+
+        echo "<p>" . $DBQueryObj->getSqlString() . "</p>";
         $DBQueryObj->runSQL_Query();
 
         $rowCnt = mysqli_num_rows($DBQueryObj->getQueryResult());
 
         if ($rowCnt > 0) {
-
             $this->performTaskOnEachPage($DBQueryObj, $startRow, $endRow);
 
             if ($rowCnt < $this->pagingInfoObj->totalRowPerPaging) {
@@ -394,29 +415,47 @@ abstract class UniversalPaging implements IPagingType {
             $this->pagingInfoObj->lastPage = 1;
             $this->handleTaskOnNoPaging();
         }
+
+        $setCurrentPage+=1;
+        
+        if ($this->pagingInfoObj->lastPage != 1 && $this->pagingInfoObj->pagingType == 1) {
+            if (isset($this->pageDelayInSecond)) {
+                sleep($this->pageDelayInSecond);
+            } else {
+                sleep(0.1);
+            }
+        
+            $this->renderPagingWithoutPageProperty($setCurrentPage);
+        }
     }
 
-    public function getLastPageStatus() {
+    public function getLastPageStatus()
+    {
         return $this->pagingInfoObj->lastPage;
     }
 
-    public function setPagingDelay($seconds = 0) {
+    public function setPagingDelay($seconds = 0)
+    {
         $this->pageDelayInSecond = $seconds;
     }
 
-    public function storeAdditionalDataToArray($data) {
+    public function storeAdditionalDataToArray($data)
+    {
         $this->mixedDataTypeArray->addMixedDataTypeToArray($data);
     }
 
-    public function getAdditionalDataArray() {
+    public function getAdditionalDataArray()
+    {
         return $this->mixedDataTypeArray->getMixedDataTypeArray();
     }
 
-    public function getAdditionalDataArrayByIndex($indexNo) {
+    public function getAdditionalDataArrayByIndex($indexNo)
+    {
         return $this->mixedDataTypeArray->getMixedDataTypeValueByIndex($indexNo);
     }
 
-    public function setAdditionalDataArrayByIndex($indexNo, $newValue) {
+    public function setAdditionalDataArrayByIndex($indexNo, $newValue)
+    {
         return $this->mixedDataTypeArray->setMixedDataTypeValueByIndex($indexNo, $newValue);
     }
 
@@ -444,4 +483,3 @@ abstract class UniversalPaging implements IPagingType {
  * 1)Method performTaskOnEachPage : will perform customized instruction when each page rendered.
  * 2)Method handleTaskOnNoPaging : will perform customized instruction when no recordset available to page.
  */
-?>
