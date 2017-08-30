@@ -149,7 +149,12 @@ abstract class UniversalPaging implements IPagingType
             }
         }
 
-        if ($this->useBlindMode === false) {
+
+        if ($this->useBlindMode) {
+            $this->pagingInfoObj->totalRow = 0;
+            $this->pagingInfoObj->totalPage = 0;
+            $this->pagingInfoObj->lastPage = 0;
+        } else {
             /*             * TODO: Original return rows count * */
             $DBQueryObj->setSQL_Statement($this->sqlStatement);
 
@@ -199,11 +204,8 @@ abstract class UniversalPaging implements IPagingType
                     $this->clearMemoryTable($this->pagingInfoObj->memTableName, $DBQueryObj);
                 }
             }
-        } else {
-            $this->pagingInfoObj->totalRow = 0;
-            $this->pagingInfoObj->totalPage = 0;
-            $this->pagingInfoObj->lastPage = 0;
         }
+        
         unset($DBQueryObj);
     }
 
@@ -246,21 +248,19 @@ abstract class UniversalPaging implements IPagingType
 
     public function startPaging($setCurrentPage)
     {
-        // Paging Type : 1 auto/virtual || 2 manual
-        //$this->initPageProperty();
-        if ($this->pagingInfoObj->pagingType == 1) {
+        if ($this->pagingInfoObj->pagingType == IPagingType::AUTO_VIRTUAL) {
             $this->initPageProperty(); //automatic calculation bit slow
-            if (!$this->useBlindMode) {
-                $this->renderPaging(1);
-            } else {
+            if ($this->useBlindMode) {
                 echo 'blind mode';
                 $this->renderPagingWithoutPageProperty($setCurrentPage);
-            }
-        } else {
-            if ($this->useBlindMode === false) {
-                $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty
             } else {
+                $this->renderPaging(1);
+            }
+        } elseif ($this->pagingInfoObj->pagingType == IPagingType::MANUAL) {
+            if ($this->useBlindMode) {
                 $this->renderPagingWithoutPageProperty($setCurrentPage);
+            } else {
+                $this->renderPaging($setCurrentPage); //no initPagePropety but setPageProperty
             }
         }
     }
@@ -351,7 +351,9 @@ abstract class UniversalPaging implements IPagingType
 
     private function renderPagingWithoutPageProperty($setCurrentPage)
     {
-        echo 'currentPage : ' . $setCurrentPage;
+        
+       // echo 'currentPage : ' . $setCurrentPage;
+
         $conn = $this->connectionDetailObj;
         $currentPage = $setCurrentPage;
         $offSetToZeroIndex = 1;
@@ -387,7 +389,8 @@ abstract class UniversalPaging implements IPagingType
 
         $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
 
-        echo "<p>" . $DBQueryObj->getSqlString() . "</p>";
+        //echo "<p>" . $DBQueryObj->getSqlString() . "</p>";
+
         $DBQueryObj->runSQL_Query();
 
         $rowCnt = mysqli_num_rows($DBQueryObj->getQueryResult());
@@ -422,7 +425,7 @@ abstract class UniversalPaging implements IPagingType
             if (isset($this->pageDelayInSecond)) {
                 sleep($this->pageDelayInSecond);
             } else {
-                sleep(0.1);
+                usleep(300000);
             }
         
             $this->renderPagingWithoutPageProperty($setCurrentPage);
