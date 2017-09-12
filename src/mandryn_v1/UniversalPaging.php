@@ -251,7 +251,6 @@ abstract class UniversalPaging implements IPagingType
         if ($this->pagingInfoObj->pagingType == IPagingType::AUTO_VIRTUAL) {
             $this->initPageProperty(); //automatic calculation bit slow
             if ($this->useBlindMode) {
-                echo 'blind mode';
                 $this->renderPagingWithoutPageProperty($setCurrentPage);
             } else {
                 $this->renderPaging(1);
