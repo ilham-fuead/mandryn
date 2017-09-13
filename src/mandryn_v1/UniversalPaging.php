@@ -231,7 +231,7 @@ abstract class UniversalPaging implements IPagingType
         }
     }
 
-    public function setPageProperty($obj)
+    public function setPageProperty(PagingInfo $obj)
     {
         $this->pagingInfoObj->totalRow = $obj->totalRow;
         $this->pagingInfoObj->totalPage = $obj->totalPage;
@@ -420,6 +420,9 @@ abstract class UniversalPaging implements IPagingType
 
         $setCurrentPage+=1;
         
+        /**
+        *If paging type is auto/virtual then recursively render next page as long as not on last page
+        */
         if ($this->pagingInfoObj->lastPage != 1 && $this->pagingInfoObj->pagingType == 1) {
             if (isset($this->pageDelayInSecond)) {
                 sleep($this->pageDelayInSecond);
