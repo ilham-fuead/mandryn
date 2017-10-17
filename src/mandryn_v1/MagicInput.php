@@ -12,43 +12,57 @@
  * @version    Release: 1.0.0
  * @since      Class available since Release 2.1.0
  */
-class MagicInput extends MagicObject{
+class MagicInput extends MagicObject
+{
     /**
-     * 
-     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true. 
+     *
+     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
      */
-    public function copy_GET_properties($apply_sanitize=true){
+    public function copy_GET_properties($apply_sanitize = true)
+    {
         
-        $GET_array=$apply_sanitize?filter_input_array(INPUT_GET,FILTER_SANITIZE_STRING):$_GET;
+        $GET_array=$apply_sanitize?filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING):$_GET;
           
         $this->copyArrayProperties($GET_array, true);
     }
     
     /**
-     * 
-     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true. 
+     *
+     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
      */
-    public function copy_POST_properties($apply_sanitize=true){
+    public function copy_POST_properties($apply_sanitize = true)
+    {
         
-        $POST_array=$apply_sanitize?filter_input_array(INPUT_POST,FILTER_SANITIZE_STRING):$_POST;
+        $POST_array=$apply_sanitize?filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING):$_POST;
           
         $this->copyArrayProperties($POST_array, true);
     }
     
     /**
-     * 
-     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true. 
+     *
+     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
      */
-    public function copy_RAW_JSON_properties($apply_sanitize=true){
+    public function copy_RAW_JSON_properties($apply_sanitize = true)
+    {
         $request = file_get_contents('php://input');
         
-        /*2nd parameter supply true to convert request as input array, false as input object*/
-        $input = json_decode($request, true);
+            /*2nd parameter supply true to convert request as input array, false as input object*/
+            $input = json_decode($request, true);
         
-        if($apply_sanitize && is_array($input)){
-           $input=filter_var_array($input,FILTER_SANITIZE_STRING); 
+        if ($apply_sanitize && is_array($input)) {
+            $input=filter_var_array($input, FILTER_SANITIZE_STRING);
         }
-        
-        $this->copyArrayProperties($input);
+            
+        if (is_array($input)) {
+            $this->copyArrayProperties($input);
+        }
+    }
+
+    public function getJsonString() {
+        if(count(parent::toArray())===0){
+            return '{}';
+        }else{
+            return parent::getJsonString();
+        }        
     }
 }
