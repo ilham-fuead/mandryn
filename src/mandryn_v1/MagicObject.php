@@ -60,6 +60,10 @@ class MagicObject {
         return $this->property;
     }
 
+    public function applyFilterDefinition($definition,$add_empty=false){
+        $this->property=filter_var_array($this->property,$definition,$add_empty);
+    }
+
     public function __unset($name) {
         unset($name);
     }
