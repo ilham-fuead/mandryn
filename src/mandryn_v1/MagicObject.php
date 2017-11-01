@@ -52,16 +52,34 @@ class MagicObject {
         }
     }
 
+    public function renameProperty($oriKey, $newKey) {
+        if (array_key_exists($oriKey, $this->property)) {
+            $this->property[$newKey] = $this->property[$oriKey];
+            unset($this->property[$oriKey]);
+        }
+    }
+
+    /**
+     * 
+     * @param array $arrayKeySet ['oldKey1'=>'newKey1','oldKey2'=>'newKey2']
+     * 
+     */
+    public function renamePropertyByArrayKeySet(array $arrayKeySet) {
+        foreach ($arrayKeySet as $oldKey => $newKey) {
+            $this->renameProperty($oldKey, $newKey);
+        }
+    }
+
     public function getJsonString() {
         return json_encode($this->property);
     }
-    
-    public function toArray(){
+
+    public function toArray() {
         return $this->property;
     }
 
-    public function applyFilterDefinition($definition,$add_empty=false){
-        $this->property=filter_var_array($this->property,$definition,$add_empty);
+    public function applyFilterDefinition($definition, $add_empty = false) {
+        $this->property = filter_var_array($this->property, $definition, $add_empty);
     }
 
     public function __unset($name) {
