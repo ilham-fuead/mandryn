@@ -14,8 +14,6 @@ interface IComparisonType {
 
     const EQUAL_TO = '=';
     const NOT_EQUAL_TO = '<>';
-    //const IDENTICAL='===';
-    //const NOT_IDENTICAL='!==';
     const GREATER_THAN = '>';
     const GREATER_THAN_OR_EQUAL_TO = '>=';
     const LESS_THAN = '<';

@@ -106,6 +106,8 @@ class DBQuery extends DB
     private $db_sql_params;
     private $db_result;
     private $commandType;
+    private $transactionEnable;
+    private $executionStatusArray;
     
     public function __construct($host, $username, $password, $database_name, $is_DB_connection_limit_enforced=true)
     {        
@@ -121,9 +123,39 @@ class DBQuery extends DB
         
         parent::__construct($host, $username, $password, $database_name);
         $this->db_sql_params = array();
-        DBQuery::$totalInstance+=1;
+        DBQuery::$totalInstance+=1;        
+        
+        $this->executionStatusArray=[];
     }
     
+    public function enableTransaction(){
+        $this->transactionEnable=TRUE;
+        mysqli_autocommit($this->db_link, FALSE);
+    }
+    
+    public function disableTransaction(){
+        $this->transactionEnable=FALSE;
+        mysqli_autocommit($this->db_link, TRUE);
+    }
+    
+    public function commitTransaction(){
+        $clearedStatusFlag=TRUE;
+        foreach ($this->executionStatusArray as $execution){
+            if($execution->status===FALSE){
+                $clearedStatusFlag=FALSE;
+                break;
+            }
+        }       
+        
+        if($clearedStatusFlag===TRUE){
+           $this->executionStatusArray=[];
+           return mysqli_commit($this->db_link); 
+        }else{
+            mysqli_rollback($this->db_link);
+            return $this->executionStatusArray;
+        }       
+    }
+        
     public static function getTotalInstanceCount(){
         return DBQuery::$totalInstance;
     }
@@ -151,8 +183,6 @@ class DBQuery extends DB
                 } else if ($this->db_result === FALSE) {
                     $errMsg = 'Database error';
                     throw new Exception($errMsg);
-                } else {
-                    $this->db_result = mysqli_query($this->db_link, $this->db_sql);
                 }
             } else {
                 $this->commandType = "query";
@@ -167,6 +197,24 @@ class DBQuery extends DB
     {
         $this->performQuery();
         $this->commandType = "non query";
+        
+        if($this->transactionEnable){
+            $this->recordExecutionStatus();
+        }
+    }
+    
+    private function recordExecutionStatus(){
+        $SQL_execution=new MagicObject();
+        
+        if($this->getCommandStatus()===TRUE){
+            $SQL_execution->status=TRUE;
+            $SQL_execution->message="success";
+        }else{
+            $SQL_execution->status=FALSE;
+            $SQL_execution->message=mysqli_error($this->getLink());;
+        }        
+        
+        $this->executionStatusArray[]=$SQL_execution;
     }
 
     public function getQueryResult()
@@ -241,6 +289,7 @@ class DBQuery extends DB
         $this->freeRecordset();
         parent::__destruct();
         unset($this->db_sql_params);
+        unset($this->executionStatusArray);
     }
 
 }

@@ -6,39 +6,73 @@
  * @version 1.0
  * @category Database
  * @author Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
- * @copyright Copyright(c) 2011, e-SILA Team 2011, SD, BPM 
+ * @copyright Copyright(c) 2017, Mandryn Team 
  */
+
 class DBCommand{
     private $SQLQueryObj;
     private $DBQueryObj;
+    private $fieldArray;
+    private $conditionFieldArray;
     
     public function  __construct(DBQuery $DBQueryObj) {
         $this->DBQueryObj=$DBQueryObj;
         $this->SQLQueryObj=new SQLQuery();
+        $this->resetAllFieldArray();
+    }
+    
+    public function enableTransaction() {
+        $this->DBQueryObj->enableTransaction();
+    }
+    
+    public function disableTransaction() {
+        $this->DBQueryObj->disableTransaction();
+    }
+    
+    public function commitTransaction(){
+        return $this->DBQueryObj->commitTransaction();
+    }
+
+    private function resetAllFieldArray(){
+        $this->fieldArray=[];
+        $this->conditionFieldArray=[];
     }
 
     public function setINSERTintoTable($tableName){
         $this->SQLQueryObj->setINSERTQuery($tableName);
+        $this->resetAllFieldArray();
     }
     
     public function setUPDATEtoTable($tableName){
         $this->SQLQueryObj->setUPDATEQuery($tableName);
+        $this->resetAllFieldArray();
     }
     
     public function setDELETEfromTable($tableName){
         $this->SQLQueryObj->setDELETEQuery($tableName);
+        $this->resetAllFieldArray();
+    }
+    
+    private function addFieldArray($fieldName, $fieldValue, $IFieldType){
+        $field=new MagicObject();
+        $field->name=$fieldName;
+        $field->value=$fieldValue;
+        $field->type=$IFieldType;
+        $this->fieldArray[]=$field;
     }
     
     public function addUPDATEcolumn($fieldName, $fieldValue, $IFieldType){
+        $this->addFieldArray($fieldName, $fieldValue, $IFieldType);
         $this->SQLQueryObj->addUpdateField($fieldName, $fieldValue, $IFieldType);
-    }
+    }    
 
     public function addINSERTcolumn($fieldName,$fieldValue,$IFieldType){
+        $this->addFieldArray($fieldName, $fieldValue, $IFieldType);
         $this->SQLQueryObj->addInsertField($fieldName, $fieldValue, $IFieldType);
     }
 
-    public function addConditionStatement($fieldName, $fieldValue, $IFieldType, $IConditionOperator=""){
-        $this->SQLQueryObj->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator);
+    public function addConditionStatement($fieldName, $fieldValue, $IFieldType, $IConditionOperator="", $IComparisonType="=", $IWildcardPosition=""){
+        $this->SQLQueryObj->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator, $IComparisonType, $IWildcardPosition);
     }  
 
     public function addInConditionStatement($fieldName, $fieldValue, $IFieldType, $IConditionOperator){
@@ -81,6 +115,12 @@ class DBCommand{
     
     public function getError(){
         return mysqli_error($this->DBQueryObj->getLink());
+    }
+    
+    public function __destruct() {
+        unset($this->fieldArray);
+        unset($this->conditionFieldArray);
+        
     }
    
 }
