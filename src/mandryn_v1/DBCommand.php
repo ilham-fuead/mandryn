@@ -37,7 +37,7 @@ class DBCommand{
         $this->SQLQueryObj->addInsertField($fieldName, $fieldValue, $IFieldType);
     }
 
-    public function addConditionStatement($fieldName, $fieldValue, $IFieldType, $IConditionOperator){
+    public function addConditionStatement($fieldName, $fieldValue, $IFieldType, $IConditionOperator=""){
         $this->SQLQueryObj->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator);
     }  
 

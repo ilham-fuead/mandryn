@@ -1,25 +1,53 @@
 <?php
 
 interface IFieldType {
-    const STRING_TYPE="string";
-    const INTEGER_TYPE="integer";
-    const FLOAT_TYPE="float";
-    const DATETIME_TYPE="datetime";
-    const UNKNOWN="unknown";
+
+    const STRING_TYPE = "string";
+    const INTEGER_TYPE = "integer";
+    const FLOAT_TYPE = "float";
+    const DATETIME_TYPE = "datetime";
+    const UNKNOWN = "unknown";
+
+}
+
+interface IComparisonType {
+
+    const EQUAL_TO = '=';
+    const NOT_EQUAL_TO = '<>';
+    //const IDENTICAL='===';
+    //const NOT_IDENTICAL='!==';
+    const GREATER_THAN = '>';
+    const GREATER_THAN_OR_EQUAL_TO = '>=';
+    const LESS_THAN = '<';
+    const LESS_THAN_OR_EQUAL_TO = '<=';
+    const STRING_LIKE = ' LIKE ';
+
+}
+
+interface IWildcardPosition {
+
+    const PREPEND = 'pre';
+    const APPEND = 'post';
+    const ENCLOSE = 'enclose';
+
 }
 
 interface IConditionOperator {
-    const NONE="";
-    const AND_OPERATOR="AND";
-    const OR_OPERATOR="OR";
+
+    const NONE = "";
+    const AND_OPERATOR = "AND";
+    const OR_OPERATOR = "OR";
+
 }
 
 interface IColumnSortOrder {
-    const ASC="ASC";
-    const DESC="DESC";
+
+    const ASC = "ASC";
+    const DESC = "DESC";
+
 }
 
-class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
+class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder, IComparisonType, IWildcardPosition {
 
     private $sqlStatement;
     private $tableName;
@@ -76,7 +104,7 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
         if (!isset($this->returnFields) || $this->returnFields == "") {
             $this->returnFields = $fieldName;
         } else {
-            $this->returnFields.="," . $fieldName;
+            $this->returnFields .= "," . $fieldName;
         }
     }
 
@@ -99,7 +127,7 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
         if (!isset($this->insertFieldsName) || $this->insertFieldsName == "") {
             $this->insertFieldsName = $fieldName;
         } else {
-            $this->insertFieldsName.="," . $fieldName;
+            $this->insertFieldsName .= "," . $fieldName;
         }
     }
 
@@ -109,7 +137,7 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
         if (!isset($this->updateFields) || $this->updateFields == "") {
             $this->updateFields = $fieldName . "=" . $fieldEncloser . $fieldValue . $fieldEncloser;
         } else {
-            $this->updateFields.="," . $fieldName . "=" . $fieldEncloser . $fieldValue . $fieldEncloser;
+            $this->updateFields .= "," . $fieldName . "=" . $fieldEncloser . $fieldValue . $fieldEncloser;
         }
     }
 
@@ -120,7 +148,7 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
         if (!isset($this->insertFields) || $this->insertFields == "") {
             $this->insertFields = $fieldEncloser . $fieldValue . $fieldEncloser;
         } else {
-            $this->insertFields.="," . $fieldEncloser . $fieldValue . $fieldEncloser;
+            $this->insertFields .= "," . $fieldEncloser . $fieldValue . $fieldEncloser;
         }
     }
 
@@ -132,64 +160,50 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
      * addConditionField('name','mr framework',IFieldType::STRING_TYPE, IConditionOperator::NONE);
      * </code>
      */
-    public function addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
+    public function addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator = "", $IComparisonType = "=", $IWildcardPosition = "") {
         $fieldEncloser = $this->getFieldEncloser($IFieldType);
 
-        if (!isset($this->conditionFields) || $this->conditionFields == "") {
-            $this->conditionFields = $fieldName . "=" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . "=" . $fieldEncloser . $fieldValue . $fieldEncloser;
+        if ($IComparisonType == ' LIKE ') {
+            $fieldValue= $this->attachWildcard($fieldValue, $IWildcardPosition);
         }
-    }
-    
-    public function addNotEqualConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
-        $fieldEncloser = $this->getFieldEncloser($IFieldType);
 
         if (!isset($this->conditionFields) || $this->conditionFields == "") {
-            $this->conditionFields = $fieldName . "<>" . $fieldEncloser . $fieldValue . $fieldEncloser;
+            $this->conditionFields = $fieldName . $IComparisonType . $fieldEncloser . $fieldValue . $fieldEncloser;
         } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . "<>" . $fieldEncloser . $fieldValue . $fieldEncloser;
+            $this->conditionFields .= " $IConditionOperator " . $fieldName . $IComparisonType . $fieldEncloser . $fieldValue . $fieldEncloser;
         }
     }
-    
+
+    private function attachWildcard($fieldValue, $IWildcardPosition) {
+        if ($IWildcardPosition == "pre") {
+            $fieldValue = "%$fieldValue";
+        } elseif ($IWildcardPosition == "post") {
+            $fieldValue = "$fieldValue%";
+        } else {
+            $fieldValue = "%$fieldValue%";
+        }
+        
+        return $fieldValue;
+    }
+
+    public function addNotEqualConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {        
+        $this->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator, IComparisonType::NOT_EQUAL_TO);
+    }
+
     public function add_MoreThan_ConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
-        $fieldEncloser = $this->getFieldEncloser($IFieldType);
-
-        if (!isset($this->conditionFields) || $this->conditionFields == "") {
-            $this->conditionFields = $fieldName . ">" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . ">" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        }
+        $this->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator, IComparisonType::GREATER_THAN);
     }
-    
+
     public function add_LessThan_ConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
-        $fieldEncloser = $this->getFieldEncloser($IFieldType);
-
-        if (!isset($this->conditionFields) || $this->conditionFields == "") {
-            $this->conditionFields = $fieldName . "<" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . "<" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        }
+        $this->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator, IComparisonType::LESS_THAN);
     }
-    
+
     public function add_MoreThanOrEqual_ConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
-        $fieldEncloser = $this->getFieldEncloser($IFieldType);
-
-        if (!isset($this->conditionFields) || $this->conditionFields == "") {
-            $this->conditionFields = $fieldName . ">=" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . ">=" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        }
+       $this->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator, IComparisonType::GREATER_THAN_OR_EQUAL_TO);
     }
-    
-    public function add_LessThanOrEqual_ConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
-        $fieldEncloser = $this->getFieldEncloser($IFieldType);
 
-        if (!isset($this->conditionFields) || $this->conditionFields == "") {
-            $this->conditionFields = $fieldName . "<=" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . "<=" . $fieldEncloser . $fieldValue . $fieldEncloser;
-        }
+    public function add_LessThanOrEqual_ConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
+        $this->addConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator, IComparisonType::LESS_THAN_OR_EQUAL_TO);
     }
 
     public function addIsNullConditionField($fieldName, $IFieldType, $IConditionOperator) {
@@ -198,28 +212,22 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
         if (!isset($this->conditionFields) || $this->conditionFields == "") {
             $this->conditionFields = $fieldName . " IS NULL";
         } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . " IS NULL";
+            $this->conditionFields .= " $IConditionOperator " . $fieldName . " IS NULL";
         }
     }
-    
+
     public function addIsNotNullConditionField($fieldName, $IFieldType, $IConditionOperator) {
         $fieldEncloser = $this->getFieldEncloser($IFieldType);
 
         if (!isset($this->conditionFields) || $this->conditionFields == "") {
             $this->conditionFields = $fieldName . " IS NOT NULL";
         } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . " IS NOT NULL";
+            $this->conditionFields .= " $IConditionOperator " . $fieldName . " IS NOT NULL";
         }
     }
 
     public function addLikeConditionField($fieldName, $fieldValue, $IConditionOperator) {
-        $fieldEncloser = $this->getFieldEncloser(IFieldType::STRING_TYPE);
-
-        if (!isset($this->conditionFields) || $this->conditionFields == "") {
-            $this->conditionFields = $fieldName . " LIKE " . $fieldEncloser . $fieldValue . $fieldEncloser;
-        } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . " LIKE " . $fieldEncloser . $fieldValue . $fieldEncloser;
-        }
+        $this->addConditionField($fieldName, $fieldValue, IFieldType::STRING_TYPE, $IConditionOperator, IComparisonType::STRING_LIKE, IWildcardPosition::ENCLOSE);
     }
 
     public function addInConditionField($fieldName, $fieldValue, $IFieldType, $IConditionOperator) {
@@ -228,10 +236,10 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
         if (!isset($this->conditionFields) || $this->conditionFields == "") {
             $this->conditionFields = $fieldName . " IN (" . $fieldEncloser . str_replace(",", "','", $fieldValue) . $fieldEncloser . ")";
         } else {
-            $this->conditionFields.=" $IConditionOperator " . $fieldName . " IN (" . $fieldEncloser . str_replace(",", "','", $fieldValue) . $fieldEncloser . ")";
+            $this->conditionFields .= " $IConditionOperator " . $fieldName . " IN (" . $fieldEncloser . str_replace(",", "','", $fieldValue) . $fieldEncloser . ")";
         }
     }
-    
+
     public function addSortOrder($fieldName, $ISortOrder) {
         $this->sortFieldName = $fieldName;
         $this->sortOrder = $ISortOrder;
@@ -243,14 +251,14 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
         }
         return TRUE;
     }
-    
-    private function isWithSortOrder(){
-        if(isset($this->sortFieldName) && $this->sortFieldName!=""){
-            if(isset($this->sortOrder) && $this->sortOrder!=""){
+
+    private function isWithSortOrder() {
+        if (isset($this->sortFieldName) && $this->sortFieldName != "") {
+            if (isset($this->sortOrder) && $this->sortOrder != "") {
                 return TRUE;
-            }else                
+            } else
                 return FALSE;
-        }else
+        } else
             return FALSE;
     }
 
@@ -259,21 +267,21 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
             return "'";
         } elseif ($IFieldType == "integer" || $IFieldType == "float") {
             return "";
-        } 
+        }
     }
 
     private function generateQuery() {
         if ($this->sqlType == "select") {
             $this->generateReturnFields();
-            $this->sqlStatement.=" FROM $this->tableName";
+            $this->sqlStatement .= " FROM $this->tableName";
             if ($this->isWithCondition())
                 $this->generateConditionFields();
-            if($this->isWithSortOrder())
-                $this->generateSortOrder ();
+            if ($this->isWithSortOrder())
+                $this->generateSortOrder();
         }elseif ($this->sqlType == "select inner join") {
             $this->generateReturnFields();
-            $this->sqlStatement.=" FROM $this->tableName INNER JOIN $this->tableName2";
-            $this->sqlStatement.=" ON $this->tableName" . "." . $this->firstTableKeyName . " = $this->tableName2" . "." . $this->secondTableKeyName;
+            $this->sqlStatement .= " FROM $this->tableName INNER JOIN $this->tableName2";
+            $this->sqlStatement .= " ON $this->tableName" . "." . $this->firstTableKeyName . " = $this->tableName2" . "." . $this->secondTableKeyName;
             if ($this->isWithCondition())
                 $this->generateConditionFields();
         }elseif ($this->sqlType == "update") {
@@ -297,8 +305,8 @@ class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder {
             }
         } elseif ($this->sqlType == "insert") {
             $this->sqlStatement = "INSERT INTO $this->tableName";
-            $this->sqlStatement.="(" . $this->insertFieldsName . ") ";
-            $this->sqlStatement.="VALUES(" . $this->insertFields . ")";
+            $this->sqlStatement .= "(" . $this->insertFieldsName . ") ";
+            $this->sqlStatement .= "VALUES(" . $this->insertFields . ")";
         }
     }
 
