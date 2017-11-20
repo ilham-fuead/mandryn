@@ -147,12 +147,14 @@ class DBQuery extends DB
             }
         }       
         
+        $copiedExecutionStatusArray=$this->executionStatusArray;
+        $this->executionStatusArray=[];
+        
         if($clearedStatusFlag===TRUE){
-           $this->executionStatusArray=[];
            return mysqli_commit($this->db_link); 
         }else{
             mysqli_rollback($this->db_link);
-            return $this->executionStatusArray;
+            return $copiedExecutionStatusArray;
         }       
     }
         
