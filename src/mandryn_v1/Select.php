@@ -8,7 +8,6 @@
  * @version 1.0
  * @category UI, HTML Input Generator
  * @author Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
- * @copyright [Closed Distribution] e-SILA 2011, OSS Developer Team, SD, BPM 01/05/2011 
  */
 
 interface ISortColumn{

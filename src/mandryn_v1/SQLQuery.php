@@ -27,7 +27,7 @@ interface IWildcardPosition {
     const PREPEND = 'pre';
     const APPEND = 'post';
     const ENCLOSE = 'enclose';
-
+    const NONE = '';
 }
 
 interface IConditionOperator {
@@ -45,7 +45,7 @@ interface IColumnSortOrder {
 
 }
 
-class SQLQuery implements IFieldType, IConditionOperator, IColumnSortOrder, IComparisonType, IWildcardPosition {
+class SQLQuery{
 
     private $sqlStatement;
     private $tableName;
