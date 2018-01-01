@@ -14,6 +14,32 @@
  */
 class MagicInput extends MagicObject
 {
+    private $inputDefinition;
+    
+    public function __construct() {
+        $this->inputDefinition=[];
+        parent::__construct();
+    }
+    
+    private function addInputDefinition($inputName,$inputType,$inputDefault,$requiredStatus=false){
+        $this->inputDefinition[]=['name'=>$inputName,'type'=>$inputType,'default'=>$inputDefault,'required'=>$requiredStatus];
+    }
+    
+    public function setInputsDefinition(array $InputsDefinition){
+        foreach($InputsDefinition as $def){
+            $this->addInputDefinition($def[0],$def[1],$def[2],$def[3]);
+        }
+    }
+    
+    public function isInputsConfirmedDefinition(){
+        $confirmed=true;
+        foreach (parent::toArray() as $key=>$val){
+            foreach($this->inputDefinition as $def){
+                
+            }
+        }
+    }
+
     /**
      *
      * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
