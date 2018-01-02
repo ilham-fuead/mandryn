@@ -16,9 +16,11 @@
 class MagicInput extends MagicObject {
 
     private $inputDefinition;
+    private $nonCompliedInputList;
 
     public function __construct() {
         $this->inputDefinition = [];
+        $this->nonCompliedInputList = [];
         parent::__construct();
     }
 
@@ -32,54 +34,69 @@ class MagicInput extends MagicObject {
         }
     }
 
+    public function logNonCompliedInput($inputName, $errorMsg) {
+        $this->nonCompliedInputList[] = ['name' => $inputName, 'error' => $errorMsg];
+    }
+
     public function isInputsComplied() {
-        /** TODO: Set initial compliance state to true * */
-        $confirmed = true;
 
         /** TODO: Loop each input definition * */
         foreach ($this->inputDefinition as $def) {
+
+            /** TODO: Set initial compliance state to true * */
+            $confirmed = true;
+
             $inputValue = null;
 
             /** TODO: Check current definition with actual input item * */
             if (array_key_exists($def['name'], parent::toArray())) {
                 $inputValue = parent::toArray()[$def['name']];
-
-                /** TODO: Check current value for correct datatype * */
-                switch ($def['type']) {
-                    case 'i':
-                        if (is_numeric($inputValue)) {
-                            /** Force type juggle before type checking **/
-                            $confirmed = is_int($inputValue + 0);
-                        } else {
-                            $confirmed = false;
-                        }
-                        break;
-                    case 'f':
-                        if (is_numeric($inputValue)) {
-                            /** Force type juggle before type checking **/
-                            $confirmed = is_float($inputValue + 0);
-                        } else {
-                            $confirmed = false;
-                        }
-                        break;
-                    case 'e':
-                        $confirmed = filter_var($inputValue, FILTER_VALIDATE_EMAIL);
-                        break;
-                    case 's':
-                        break;
-                }
-                
             } else {
                 if ($def['required'] == true) {
                     $confirmed = false;
-                    break;
+                    $this->logNonCompliedInput($def['name'], 'Input is required');
                 } else {
                     $confirmed = true;
                 }
             }
+
+            /** TODO: Check current value for correct datatype * */
+            switch ($def['type']) {
+                case 'i':
+                    if (is_numeric($inputValue)) {
+                        /** Force type juggle before type checking * */
+                        $inputValue += 0;
+                        
+                        if(!is_int($inputValue)){
+                           $this->logNonCompliedInput($def['name'], 'Input must be integer'); 
+                        }
+                    } else {
+                        $this->logNonCompliedInput($def['name'], 'Input must be integer');
+                        $confirmed = false;
+                    }
+                    break;
+                case 'f':
+                    if (is_numeric($inputValue)) {
+                        /** Force type juggle before type checking * */
+                        $inputValue += 0;
+                        $confirmed = is_float($inputValue);
+                    } else {                        
+                        $confirmed = false;
+                    }
+                    break;
+                case 'e':
+                    $confirmed = filter_var($inputValue, FILTER_VALIDATE_EMAIL);
+                    break;
+                case 's':
+                    break;
+            }
         }
 
-        return $confirmed;
+        if (count($this->nonCompliedInputList) > 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**
