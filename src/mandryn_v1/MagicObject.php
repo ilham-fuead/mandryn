@@ -10,12 +10,12 @@
  * @author     Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
  * @copyright  2017-2022 The Mandryn Team
  * @license    http://www.php.net/license/3_01.txt  PHP License 3.01
- * @version    Release: 1.1.0
+ * @version    Release: 1.1.1
  * @since      Class available since Release 2.0.0
  */
 class MagicObject {
 
-    private $property;
+    protected $property;
 
     public function __construct() {
         $this->property = [];
@@ -83,7 +83,7 @@ class MagicObject {
     }
 
     public function __unset($name) {
-        unset($name);
+        unset($this->property[$name]);
     }
 
     public function __destruct() {

@@ -10,17 +10,21 @@
  * @author     Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
  * @copyright  2017-2022 The Mandryn Team
  * @license    http://www.php.net/license/3_01.txt  PHP License 3.01
- * @version    Release: 1.0.0
+ * @version    Release: 1.2.0
  * @since      Class available since Release 2.1.0
  */
 class MagicInput extends MagicObject {
 
     private $inputDefinition;
     private $nonCompliedInputList;
+    private $isDefinitionExist;
+    private $removeNonDefineInput;
 
     public function __construct() {
         $this->inputDefinition = [];
         $this->nonCompliedInputList = [];
+        $this->isDefinitionExist = false;
+        $this->removeNonDefineInput = true;
         parent::__construct();
     }
 
@@ -28,23 +32,48 @@ class MagicInput extends MagicObject {
         $this->inputDefinition[] = ['name' => $inputName, 'type' => $inputType, 'required' => $requiredStatus];
     }
 
-    public function setInputsDefinition(array $InputsDefinition) {
+    /**
+     * 
+     * @param array $InputsDefinition child array format - each input definition is in array format  [ string inputName, string inputType, boolean requiredStatus]
+     */
+    public function setInputsDefinition(array $InputsDefinition, $removeNonDefineInput = true) {
+        $this->isDefinitionExist = true;
+        $this->removeNonDefineInput = $removeNonDefineInput;
         foreach ($InputsDefinition as $def) {
             $this->addInputDefinition($def[0], $def[1], $def[2]);
         }
     }
 
-    public function logNonCompliedInput($inputName, $errorMsg) {
+    private function logNonCompliedInput($inputName, $errorMsg) {
         $this->nonCompliedInputList[] = ['name' => $inputName, 'error' => $errorMsg];
     }
 
-    public function isInputsComplied() {
+    public function getNonCompliedInputList() {
+        return $this->nonCompliedInputList;
+    }
+
+    private function deleteInputWithoutDefinition() {
+        $validInputList = [];
+
+        foreach ($this->inputDefinition as $def) {
+            $validInputList[] = $def['name'];
+        }
+
+        foreach ($this->property as $key => $val) {
+            if (!in_array($key, $validInputList)) {
+                unset($this->{$key});
+            }
+        }
+
+        unset($validInputList);
+    }
+
+    private function checkComplyDefinition() {
+        /** TODO: Reset non-complied input list * */
+        $this->nonCompliedInputList = [];
 
         /** TODO: Loop each input definition * */
         foreach ($this->inputDefinition as $def) {
-
-            /** TODO: Set initial compliance state to true * */
-            $confirmed = true;
 
             $inputValue = null;
 
@@ -53,10 +82,8 @@ class MagicInput extends MagicObject {
                 $inputValue = parent::toArray()[$def['name']];
             } else {
                 if ($def['required'] == true) {
-                    $confirmed = false;
                     $this->logNonCompliedInput($def['name'], 'Input is required');
-                } else {
-                    $confirmed = true;
+                    continue;
                 }
             }
 
@@ -66,36 +93,73 @@ class MagicInput extends MagicObject {
                     if (is_numeric($inputValue)) {
                         /** Force type juggle before type checking * */
                         $inputValue += 0;
-                        
-                        if(!is_int($inputValue)){
-                           $this->logNonCompliedInput($def['name'], 'Input must be integer'); 
+                        if (!filter_var($inputValue, FILTER_VALIDATE_INT)) {
+                            $this->logNonCompliedInput($def['name'], 'Input must be an integer');
                         }
                     } else {
-                        $this->logNonCompliedInput($def['name'], 'Input must be integer');
-                        $confirmed = false;
+                        $this->logNonCompliedInput($def['name'], 'Input must be an integer');
                     }
                     break;
                 case 'f':
                     if (is_numeric($inputValue)) {
                         /** Force type juggle before type checking * */
                         $inputValue += 0;
-                        $confirmed = is_float($inputValue);
-                    } else {                        
-                        $confirmed = false;
+                        if (!is_float($inputValue)) {
+                            $this->logNonCompliedInput($def['name'], 'Input must be a float');
+                        }
+                    } else {
+                        $this->logNonCompliedInput($def['name'], 'Input must be a float');
+                    }
+                    break;
+                case 'n':
+                    if (!is_numeric($inputValue)) {
+                        $this->logNonCompliedInput($def['name'], 'Input must be a number');
                     }
                     break;
                 case 'e':
-                    $confirmed = filter_var($inputValue, FILTER_VALIDATE_EMAIL);
+                    if (!filter_var($inputValue, FILTER_VALIDATE_EMAIL)) {
+                        $this->logNonCompliedInput($def['name'], 'Input must be an email');
+                    }
                     break;
                 case 's':
+                    /** TODO: Skip checking for string type * */
                     break;
             }
         }
 
+        if ($this->removeNonDefineInput) {
+            $this->deleteInputWithoutDefinition();
+        }
+    }
+
+    public function isInputsComplied() {
+        $this->checkComplyDefinition();
         if (count($this->nonCompliedInputList) > 0) {
             return false;
         } else {
             return true;
+        }
+    }
+
+    public function getJsonString() {
+        if ($this->isDefinitionExist) {
+            if ($this->isInputsComplied()) {
+                return parent::getJsonString();
+            } else {
+                return '[]';
+            }
+        } else {
+            return parent::getJsonString();
+        }
+    }
+
+    public function toArray() {
+        if ($this->isDefinitionExist) {
+            if ($this->isInputsComplied()) {
+                return parent::toArray();
+            }
+        } else {
+            return parent::toArray();
         }
     }
 
@@ -137,14 +201,6 @@ class MagicInput extends MagicObject {
 
         if (is_array($input)) {
             $this->copyArrayProperties($input);
-        }
-    }
-
-    public function getJsonString() {
-        if (count(parent::toArray()) === 0) {
-            return '{}';
-        } else {
-            return parent::getJsonString();
         }
     }
 
