@@ -131,7 +131,7 @@ class MagicInput extends MagicObject {
             $this->deleteInputWithoutDefinition();
         }
     }
-
+    
     public function isInputsComplied() {
         $this->checkComplyDefinition();
         if (count($this->nonCompliedInputList) > 0) {
