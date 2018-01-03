@@ -68,7 +68,7 @@ class MagicInput extends MagicObject {
         unset($validInputList);
     }
 
-    private function checkComplyDefinition() {
+    private function applyInputDefinition() {
         /** TODO: Reset non-complied input list * */
         $this->nonCompliedInputList = [];
 
@@ -134,7 +134,7 @@ class MagicInput extends MagicObject {
     }
 
     public function isInputsComplied() {
-        $this->checkComplyDefinition();
+        $this->applyInputDefinition();
         if (count($this->nonCompliedInputList) > 0) {
             return false;
         } else {
