@@ -82,9 +82,10 @@ class MagicInput extends MagicObject {
                 $inputValue = parent::toArray()[$def['name']];
             } else {
                 if ($def['required'] == true) {
-                    $this->logNonCompliedInput($def['name'], 'Input is required');
-                    continue;
+                    $this->logNonCompliedInput($def['name'], 'Input is required');                    
                 }
+                
+                continue;
             }
 
             /** TODO: Check current value for correct datatype * */
