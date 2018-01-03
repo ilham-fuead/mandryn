@@ -131,7 +131,7 @@ class MagicInput extends MagicObject {
             $this->deleteInputWithoutDefinition();
         }
     }
-    
+
     public function isInputsComplied() {
         $this->checkComplyDefinition();
         if (count($this->nonCompliedInputList) > 0) {
@@ -156,6 +156,7 @@ class MagicInput extends MagicObject {
     public function toArray() {
         if ($this->isDefinitionExist) {
             if ($this->isInputsComplied()) {
+                /** TODO:Instead of deleting non define input, return input with definition */
                 return parent::toArray();
             }
         } else {
