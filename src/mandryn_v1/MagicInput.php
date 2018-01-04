@@ -82,9 +82,12 @@ class MagicInput extends MagicObject {
             /** TODO: Check current definition with actual input item * */
             if (array_key_exists($def['name'], parent::toArray())) {
                 $inputValue = parent::toArray()[$def['name']];
+                if($inputValue==null || trim($inputValue)==''){
+                    $this->logNonCompliedInput($def['name'], 'Input cannot be null or empty');
+                }
             } else {
                 if ($def['required'] == true) {
-                    $this->logNonCompliedInput($def['name'], 'Input is required');
+                    $this->logNonCompliedInput($def['name'], 'Input required');
                 }
 
                 continue;

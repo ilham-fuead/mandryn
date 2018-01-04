@@ -122,6 +122,7 @@ class DBCommand {
             case 'd':
             case 'dt':
                 return 'datetime';
+            case 'n':
             case 'f':
                 return 'float';
             case 'i':
@@ -187,5 +188,3 @@ class DBCommand {
     }
 
 }
-
-?>
