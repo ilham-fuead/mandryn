@@ -28,19 +28,21 @@ class MagicInput extends MagicObject {
         parent::__construct();
     }
 
-    private function addInputDefinition($inputName, $inputType, $requiredStatus = false) {
-        $this->inputDefinition[] = ['name' => $inputName, 'type' => $inputType, 'required' => $requiredStatus];
+    private function addInputDefinition($inputName, $inputType, $requiredStatus = false, $integrationAlias = '') {
+        $this->inputDefinition[] = ['name' => $inputName, 'type' => $inputType, 'required' => $requiredStatus, 'alias' => $integrationAlias];
     }
 
     /**
      * 
-     * @param array $InputsDefinition child array format - each input definition is in array format  [ string inputName, string inputType, boolean requiredStatus]
+     * @param array $InputsDefinition child array format - each input definition is in array format  [ string inputName, string inputType, boolean requiredStatus, string integrationAlias]
+     * 
+     * integrationAlias is for mapping with other object/entity/collection
      */
     public function setInputsDefinition(array $InputsDefinition, $removeNonDefineInput = true) {
         $this->isDefinitionExist = true;
         $this->removeNonDefineInput = $removeNonDefineInput;
         foreach ($InputsDefinition as $def) {
-            $this->addInputDefinition($def[0], $def[1], $def[2]);
+            $this->addInputDefinition($def[0], $def[1], $def[2], $def[3]);
         }
     }
 
@@ -82,9 +84,9 @@ class MagicInput extends MagicObject {
                 $inputValue = parent::toArray()[$def['name']];
             } else {
                 if ($def['required'] == true) {
-                    $this->logNonCompliedInput($def['name'], 'Input is required');                    
+                    $this->logNonCompliedInput($def['name'], 'Input is required');
                 }
-                
+
                 continue;
             }
 
@@ -122,6 +124,22 @@ class MagicInput extends MagicObject {
                         $this->logNonCompliedInput($def['name'], 'Input must be an email');
                     }
                     break;
+                case 'd':
+                    $format = 'Y-m-d';
+                    $d = DateTime::createFromFormat($format, $inputValue);
+                    if (!($d && $d->format($format) == $inputValue)) {
+                        $this->logNonCompliedInput($def['name'], 'Input must be a valid date');
+                    }
+                    break;
+                case 'dt':
+                    $format = 'Y-m-d H:i:s';
+                    $d = DateTime::createFromFormat($format, $inputValue);
+                    if (!($d && $d->format($format) == $inputValue)) {
+                        $this->logNonCompliedInput($def['name'], 'Input must be a valid datetime');
+                    }
+                    break;
+                case 'u':
+                    /** TODO: Skip checking for unknown type * */
                 case 's':
                     /** TODO: Skip checking for string type * */
                     break;
@@ -140,6 +158,10 @@ class MagicInput extends MagicObject {
         } else {
             return true;
         }
+    }
+
+    public function getInputsDefinition() {
+        return $this->inputDefinition;
     }
 
     public function getJsonString() {
