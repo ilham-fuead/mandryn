@@ -82,12 +82,13 @@ class MagicInput extends MagicObject {
             /** TODO: Check current definition with actual input item * */
             if (array_key_exists($def['name'], parent::toArray())) {
                 $inputValue = parent::toArray()[$def['name']];
-                if($inputValue==null || trim($inputValue)==''){
-                    $this->logNonCompliedInput($def['name'], 'Input cannot be null or empty');
+                if (($inputValue == null || trim($inputValue) == '') && $inputValue != '0') {
+                    $this->logNonCompliedInput($def['name'], 'Empty or null' . $inputValue);
+                    continue;
                 }
             } else {
                 if ($def['required'] == true) {
-                    $this->logNonCompliedInput($def['name'], 'Input required');
+                    $this->logNonCompliedInput($def['name'], 'Required');
                 }
 
                 continue;
@@ -96,53 +97,35 @@ class MagicInput extends MagicObject {
             /** TODO: Check current value for correct datatype * */
             switch ($def['type']) {
                 case 'i':
-                    if (is_numeric($inputValue)) {
-                        /** Force type juggle before type checking * */
-                        $inputValue += 0;
-                        if (!filter_var($inputValue, FILTER_VALIDATE_INT)) {
-                            $this->logNonCompliedInput($def['name'], 'Input must be an integer');
-                        }
-                    } else {
-                        $this->logNonCompliedInput($def['name'], 'Input must be an integer');
-                    }
+                    $this->numericTypeChecker($def['name'], $inputValue, 'Not an integer', 'i');
                     break;
                 case 'f':
-                    if (is_numeric($inputValue)) {
-                        /** Force type juggle before type checking * */
-                        $inputValue += 0;
-                        if (!is_float($inputValue)) {
-                            $this->logNonCompliedInput($def['name'], 'Input must be a float');
-                        }
-                    } else {
-                        $this->logNonCompliedInput($def['name'], 'Input must be a float');
-                    }
+                    $this->numericTypeChecker($def['name'], $inputValue, 'Not a float', 'f');
                     break;
                 case 'n':
-                    if (!is_numeric($inputValue)) {
-                        $this->logNonCompliedInput($def['name'], 'Input must be a number');
-                    }
+                    $this->numericTypeChecker($def['name'], $inputValue, 'Not a number', 'n');
                     break;
                 case 'e':
                     if (!filter_var($inputValue, FILTER_VALIDATE_EMAIL)) {
-                        $this->logNonCompliedInput($def['name'], 'Input must be an email');
+                        $this->logNonCompliedInput($def['name'], 'Invalid e-mail');
                     }
                     break;
                 case 'd':
                     $format = 'Y-m-d';
                     $d = DateTime::createFromFormat($format, $inputValue);
                     if (!($d && $d->format($format) == $inputValue)) {
-                        $this->logNonCompliedInput($def['name'], 'Input must be a valid date');
+                        $this->logNonCompliedInput($def['name'], 'Invalid date');
                     }
                     break;
                 case 'dt':
                     $format = 'Y-m-d H:i:s';
                     $d = DateTime::createFromFormat($format, $inputValue);
                     if (!($d && $d->format($format) == $inputValue)) {
-                        $this->logNonCompliedInput($def['name'], 'Input must be a valid datetime');
+                        $this->logNonCompliedInput($def['name'], 'Invalid datetime');
                     }
                     break;
                 case 'u':
-                    /** TODO: Skip checking for unknown type * */
+                /** TODO: Skip checking for unknown type * */
                 case 's':
                     /** TODO: Skip checking for string type * */
                     break;
@@ -151,6 +134,29 @@ class MagicInput extends MagicObject {
 
         if ($this->removeNonDefineInput) {
             $this->deleteInputWithoutDefinition();
+        }
+    }
+
+    private function numericTypeChecker($inputName, $inputValue, $errMsg, $type = '') {
+
+        if (is_numeric($inputValue)) {
+            /** Force type juggle before type checking * */
+            $inputValue += 0;
+
+            switch ($type) {
+                case 'i':
+                    if (!is_int($inputValue)) {
+                        $this->logNonCompliedInput($inputName, $errMsg);
+                    }
+                    break;
+                case 'f':
+                    if (!is_float($inputValue)) {
+                        $this->logNonCompliedInput($inputName, $errMsg);
+                    }
+                    break;
+            }
+        } else {
+            $this->logNonCompliedInput($inputName, $errMsg);
         }
     }
 
