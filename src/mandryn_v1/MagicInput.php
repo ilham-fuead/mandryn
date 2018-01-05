@@ -33,10 +33,32 @@ class MagicInput extends MagicObject {
     }
 
     /**
+     * Use INPUT DEFINITION - to establish acceptable input trait
      * 
-     * @param array $InputsDefinition child array format - each input definition is in array format  [ string inputName, string inputType, boolean requiredStatus, string integrationAlias]
+     * @param array $InputsDefinition
      * 
-     * integrationAlias is for mapping with other object/entity/collection
+     * Definition is in Array format - [string inputName, string inputType, boolean requiredStatus, string inputAlias] 
+     * Notes: 
+     * 
+     *    i. inputType(string) to denote input datatype/format as:
+     *       [i] Integer
+     *       [f] Float
+     *       [n] Numeric(integer/float) 
+     *       [d] Date(yyyy-mm-dd)
+     *       [dt] Datetime(yyyy-mm-dd HH:mm:ss)
+     *       [s] String
+     *       [e] E-mail
+     *       [u] Unknown
+     *      
+     *   ii. requiredStatus is use to denote input is mandatory
+     *
+     *  iii. inputAlias(string) is use for input mapping in other component/object/array
+     *       If no alias given, inputName will be used for mapping
+     * 
+     * @param boolean $removeNonDefineInput
+     * 
+     * Remove all input without definition if this parameter set tu true(default)
+     * 
      */
     public function setInputsDefinition(array $InputsDefinition, $removeNonDefineInput = true) {
         $this->isDefinitionExist = true;
@@ -95,45 +117,50 @@ class MagicInput extends MagicObject {
             }
 
             /** TODO: Check current value for correct datatype * */
-            switch ($def['type']) {
-                case 'i':
-                    $this->numericTypeChecker($def['name'], $inputValue, 'Not an integer', 'i');
-                    break;
-                case 'f':
-                    $this->numericTypeChecker($def['name'], $inputValue, 'Not a float', 'f');
-                    break;
-                case 'n':
-                    $this->numericTypeChecker($def['name'], $inputValue, 'Not a number', 'n');
-                    break;
-                case 'e':
-                    if (!filter_var($inputValue, FILTER_VALIDATE_EMAIL)) {
-                        $this->logNonCompliedInput($def['name'], 'Invalid e-mail');
-                    }
-                    break;
-                case 'd':
-                    $format = 'Y-m-d';
-                    $d = DateTime::createFromFormat($format, $inputValue);
-                    if (!($d && $d->format($format) == $inputValue)) {
-                        $this->logNonCompliedInput($def['name'], 'Invalid date');
-                    }
-                    break;
-                case 'dt':
-                    $format = 'Y-m-d H:i:s';
-                    $d = DateTime::createFromFormat($format, $inputValue);
-                    if (!($d && $d->format($format) == $inputValue)) {
-                        $this->logNonCompliedInput($def['name'], 'Invalid datetime');
-                    }
-                    break;
-                case 'u':
-                /** TODO: Skip checking for unknown type * */
-                case 's':
-                    /** TODO: Skip checking for string type * */
-                    break;
-            }
+            $this->inputTypeChecker($def['name'], $inputValue, $def['type']);
         }
 
         if ($this->removeNonDefineInput) {
             $this->deleteInputWithoutDefinition();
+        }
+    }
+
+    private function inputTypeChecker($inputName, $inputValue, $inputType = '') {
+        
+        switch ($inputType) {
+            case 'i':
+                $this->numericTypeChecker($inputName, $inputValue, 'Not an integer', 'i');
+                break;
+            case 'f':
+                $this->numericTypeChecker($inputName, $inputValue, 'Not a float', 'f');
+                break;
+            case 'n':
+                $this->numericTypeChecker($inputName, $inputValue, 'Not a number', 'n');
+                break;
+            case 'e':
+                if (!filter_var($inputValue, FILTER_VALIDATE_EMAIL)) {
+                    $this->logNonCompliedInput($inputName, 'Invalid e-mail');
+                }
+                break;
+            case 'd':
+                $format = 'Y-m-d';
+                $this->datetimeTypeChecker($inputName, $inputValue, 'Invalid date', $format);
+                break;
+            case 'dt':
+                $format = 'Y-m-d H:i:s';
+                $this->datetimeTypeChecker($inputName, $inputValue, 'Invalid datetime', $format);
+                break;
+            case 'u':
+            case 's':
+            case '':
+                break;
+        }
+    }
+
+    private function datetimeTypeChecker($inputName, $inputValue, $errMsg, $format = '') {
+        $d = DateTime::createFromFormat($format, $inputValue);
+        if (!($d && $d->format($format) == $inputValue)) {
+            $this->logNonCompliedInput($inputName, $errMsg);
         }
     }
 
