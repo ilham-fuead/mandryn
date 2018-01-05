@@ -10,7 +10,7 @@
  * @author     Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
  * @copyright  2017-2022 The Mandryn Team
  * @license    http://www.php.net/license/3_01.txt  PHP License 3.01
- * @version    Release: 1.2.0
+ * @version    Release: 1.3.2
  * @since      Class available since Release 2.1.0
  */
 class MagicInput extends MagicObject {
