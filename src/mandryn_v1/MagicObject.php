@@ -53,9 +53,12 @@ class MagicObject {
     }
 
     public function renameProperty($oriKey, $newKey) {
-        if (array_key_exists($oriKey, $this->property)) {
-            $this->property[$newKey] = $this->property[$oriKey];
-            unset($this->property[$oriKey]);
+        /* Skip if oriKey equal to newKey */
+        if ($oriKey != $newKey) {
+            if (array_key_exists($oriKey, $this->property)) {
+                $this->property[$newKey] = $this->property[$oriKey];
+                unset($this->property[$oriKey]);
+            }
         }
     }
 
