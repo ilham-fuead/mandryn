@@ -80,6 +80,10 @@ class DB
     {
         $this->closeLink();
     }
+    
+    public function escape_string($escapestr){
+        return mysqli_real_escape_string($this->db_link,$escapestr);
+    }    
 
     private function setMinum()
     {
@@ -270,7 +274,7 @@ class DBQuery extends DB
             }
         }
     }
-
+    
     public function getSqlString()
     {
         return $this->db_sql;
