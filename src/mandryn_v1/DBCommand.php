@@ -137,6 +137,7 @@ class DBCommand {
      * 
      */
     public function integrateInputAsConditions(MagicInput $magicInputObj, array $conditionSetupList) {
+        /**Test script https://gitlab.com/snippets/1707522 */
         //TODO: Copy from Magicinput
         $inputs = $magicInputObj->toArray();
 
