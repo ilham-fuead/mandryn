@@ -31,7 +31,7 @@ class MagicInput extends MagicObject {
     private function addInputDefinition($inputName, $inputType, $requiredStatus = false, $integrationAlias = '') {
         $this->inputDefinition[] = ['name' => $inputName, 'type' => $inputType, 'required' => $requiredStatus, 'alias' => $integrationAlias];
     }
-
+    
     /**
      * Use INPUT DEFINITION - to establish acceptable input trait
      * 

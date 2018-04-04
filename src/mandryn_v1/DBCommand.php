@@ -3,7 +3,7 @@
 /**
  * <p>Class to facilate database command operation such as insert,delete and update.</p>
  *  
- * @version 1.1.0
+ * @version 2.1.0
  * @category Database
  * @author Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
  * @copyright Copyright(c) 2017, Mandryn Team 
@@ -76,35 +76,101 @@ class DBCommand {
         $this->SQLQueryObj->addInsertField($fieldName, $fieldValue, $IFieldType);
     }
 
-    public function integrateInputColumns(MagicInput $magicInputObj, array $excludeList = []) {
+    public function importInputColumns(MagicInput $magicInputObj, array $excludeList = []) {
         $inputs = $magicInputObj->toArray();
 
         if (count($inputs) > 0) {
             foreach ($magicInputObj->getInputsDefinition() as $def) {
 
-
-                $name = $def['name'];
-                $alias = $def['alias'];
-
                 $type = $this->typeIntegrationMapper($def['type']);
-                $fieldName = $this->fieldNameSolver($name, $alias);
+                $fieldName = $this->fieldNameSolver($def['name'], $def['alias']);
 
-                if (in_array($name, $excludeList)) {
+                if (in_array($def['name'], $excludeList)) {
                     continue;
                 }
 
                 if (!$def['required']) {
-                    if (!isset($inputs[$name])) {
+                    if (!isset($inputs[$def['name']])) {
                         continue;
                     }
                 }
 
                 if ($this->operationType == 'update') {
-                    $this->addUPDATEcolumn($fieldName, $inputs[$name], $type);
+                    $this->addUPDATEcolumn($fieldName, $inputs[$def['name']], $type);
                 } elseif ($this->operationType == 'insert') {
-                    $this->addINSERTcolumn($fieldName, $inputs[$name], $type);
+                    $this->addINSERTcolumn($fieldName, $inputs[$def['name']], $type);
                 }
             }
+        }
+    }
+
+    /**
+     * @param MagicInput $magicInputObj
+     * 
+     * Consume magicinputObj as columns in SQL condition 
+     * 
+     * @param array $conditionSetupList
+     * 
+     * Condition Setup List - to configure which & how inpus is use in query condition
+     * 
+     * $conditionSetupList must be in an Array format - [[string inputName, string conditionOperator, string combineConditionOperator]] 
+     * 
+     * Notes: 
+     * 
+     *    i. inputName(string) is use to specify input name as condition field 
+     *   ii. conditionOperator (string) to denote operator use for comparison as follow:
+     *       1. >
+     *       2. >=
+     *       3. < 
+     *       4. <=
+     *       5. <>
+     *      
+     *   ii. combineConditionOperator (string) is use to denote operator use when 
+     *       combining 2 or more conditions. First/single condition must always have
+     *       value IConditionOperator::NONE. Second and consequence condition should use
+     *       value IConditionOperator::* except IConditionOperator::NONE.   
+     * 
+     */
+    public function importConditionColumns(MagicInput $magicInputObj, array $conditionSetupList) {
+        /** Test script https://gitlab.com/snippets/1707522 */
+        //TODO: Copy from Magicinput
+        $inputs = $magicInputObj->toArray();
+
+        $inputConditionList = [];
+
+        $firstCondition = true;
+
+        foreach ($conditionSetupList as $conditionSetup) {
+            if ($firstCondition) {
+                $combiner = IConditionOperator::NONE;
+                $firstCondition = false;
+            } else {
+                $combiner = $conditionSetup[2];
+            }
+
+            if ($conditionSetup[1] == IComparisonType::STRING_LIKE) {
+                $wildcardPosition = $conditionSetup[3];
+            } else {
+                $wildcardPosition = IWildcardPosition::NONE;
+            }
+
+            $inputConditionList[$conditionSetup[0]] = [
+                'name' => $conditionSetup[0],
+                'operator' => $conditionSetup[1],
+                'combiner' => $combiner,
+                'wcposition' => $wildcardPosition
+            ];
+        }
+
+        unset($conditionSetupList);
+
+        foreach ($magicInputObj->getInputsDefinition() as $def) {
+
+            if (!array_key_exists($def['name'], $inputConditionList)) {
+                continue;
+            }
+
+            $this->processSingleCondition($inputs[$def['name']], $def, $inputConditionList[$def['name']]);
         }
     }
 
@@ -185,6 +251,22 @@ class DBCommand {
     public function __destruct() {
         unset($this->fieldArray);
         unset($this->conditionFieldArray);
+    }
+
+    private function processSingleCondition($fieldvalue, array $fieldDefinition, array $conditionSetup) {
+        $def = $fieldDefinition;
+
+        $name = $def['name'];
+        $alias = $def['alias'];
+
+        $type = $this->typeIntegrationMapper($def['type']);
+        $fieldName = $this->fieldNameSolver($name, $alias);
+
+        if ($conditionSetup['operator'] == IComparisonType::STRING_LIKE) {
+            $this->addConditionStatement($fieldName, $fieldvalue, IFieldType::STRING_TYPE, $conditionSetup['combiner'], $conditionSetup['operator'], $conditionSetup['wcposition']);
+        } else {
+            $this->addConditionStatement($fieldName, $fieldvalue, $type, $conditionSetup['combiner'], $conditionSetup['operator']);
+        }
     }
 
 }
