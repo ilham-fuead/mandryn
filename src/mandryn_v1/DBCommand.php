@@ -3,7 +3,7 @@
 /**
  * <p>Class to facilate database command operation such as insert,delete and update.</p>
  *  
- * @version 1.1.0
+ * @version 2.1.0
  * @category Database
  * @author Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
  * @copyright Copyright(c) 2017, Mandryn Team 
@@ -76,7 +76,7 @@ class DBCommand {
         $this->SQLQueryObj->addInsertField($fieldName, $fieldValue, $IFieldType);
     }
 
-    public function importFields(MagicInput $magicInputObj, array $excludeList = []) {
+    public function importInputColumns(MagicInput $magicInputObj, array $excludeList = []) {
         $inputs = $magicInputObj->toArray();
 
         if (count($inputs) > 0) {
@@ -107,7 +107,7 @@ class DBCommand {
     /**
      * @param MagicInput $magicInputObj
      * 
-     * Consume magicinputObj as fields for SQL condition 
+     * Consume magicinputObj as columns in SQL condition 
      * 
      * @param array $conditionSetupList
      * 
@@ -131,7 +131,7 @@ class DBCommand {
      *       value IConditionOperator::* except IConditionOperator::NONE.   
      * 
      */
-    public function importConditions(MagicInput $magicInputObj, array $conditionSetupList) {
+    public function importConditionColumns(MagicInput $magicInputObj, array $conditionSetupList) {
         /** Test script https://gitlab.com/snippets/1707522 */
         //TODO: Copy from Magicinput
         $inputs = $magicInputObj->toArray();
