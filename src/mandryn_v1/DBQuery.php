@@ -116,7 +116,7 @@ class DBQuery extends DB
     public function __construct($host, $username, $password, $database_name, $is_DB_connection_limit_enforced=true)
     {        
         try{
-            if(DBQuery::$totalInstance>=DBQuery::MAX_TOTAL_INSTANCE && $is_DB_connection_limit_enforced){
+            if(DBQuery::$totalInstance>DBQuery::MAX_TOTAL_INSTANCE && $is_DB_connection_limit_enforced){
                 $errMsg = 'DBQuery error : Maximum connection limit exceeded!';
                 throw new Exception($errMsg);
             }
