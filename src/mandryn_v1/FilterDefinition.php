@@ -3,7 +3,7 @@
 /**
  * Class to construct proper filter definition. 
  * Constructed definition can be obtain by calling method getDefinition 
- * that return filter definition in array form.
+ * that return filter definition is in an array form.
  *
  * @author Mohd Ilhammuddin Bin Mohd Fuead
  */
