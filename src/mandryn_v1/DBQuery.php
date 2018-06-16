@@ -252,16 +252,29 @@ class DBQuery extends DB
     {
         return mysqli_fetch_array($this->db_result, $resulttype);
     }
-
+    
     public function getRowsInJSON()
     {
         $rows = [];
+        
         foreach ($this->yieldRow() as $row) {
             $rows[] = $row;
         }
+        
         $rowsJSON = json_encode($rows);
         unset($rows);
         return $rowsJSON;
+    }
+    
+    public function getRowsInArray()
+    {
+        $rows = [];
+        
+        foreach ($this->yieldRow() as $row) {
+            $rows[] = $row;
+        }
+        
+        return $rows;
     }
 
     public function isHavingRecordRow()
