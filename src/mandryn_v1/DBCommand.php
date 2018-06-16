@@ -66,12 +66,22 @@ class DBCommand {
         $this->fieldArray[] = $field;
     }
 
-    public function addUPDATEcolumn($fieldName, $fieldValue, $IFieldType) {
+    public function addUPDATEcolumn($fieldName, $fieldValue, $IFieldType, $isFieldValueNeedEscape=false) {
+        
+        if($isFieldValueNeedEscape){
+            $fieldValue=$this->DBQueryObj->escape_string($fieldValue);
+        }
+        
         $this->addFieldArray($fieldName, $fieldValue, $IFieldType);
         $this->SQLQueryObj->addUpdateField($fieldName, $fieldValue, $IFieldType);
     }
 
-    public function addINSERTcolumn($fieldName, $fieldValue, $IFieldType) {
+    public function addINSERTcolumn($fieldName, $fieldValue, $IFieldType, $isFieldValueNeedEscape=false) {
+        
+        if($isFieldValueNeedEscape){
+            $fieldValue=$this->DBQueryObj->escape_string($fieldValue);
+        }
+        
         $this->addFieldArray($fieldName, $fieldValue, $IFieldType);
         $this->SQLQueryObj->addInsertField($fieldName, $fieldValue, $IFieldType);
     }
