@@ -105,6 +105,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
         if ($this->isAuthenticated($uName, $uPassword)) {
             $this->setAuthenticate($uName);
             if ($this->httpResponseAction == IAuthenticationAction::REDIRECT) {
+                $this->loadUserDetail($uName);
                 $this->redirect("in");
             } else if ($this->httpResponseAction == IAuthenticationAction::SET_HTTP_RESPONSE_HEADER) {
                 header("{$_SERVER['SERVER_PROTOCOL']} 200 OK");
