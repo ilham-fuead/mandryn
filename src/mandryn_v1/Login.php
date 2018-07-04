@@ -110,8 +110,12 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
                 header("{$_SERVER['SERVER_PROTOCOL']} 200 OK");
             }
         } else {
-            header("{$_SERVER['SERVER_PROTOCOL']} 401 Unauthorized");
-            exit;
+            if ($this->httpResponseAction == IAuthenticationAction::REDIRECT) {
+                return false;
+            } else if ($this->httpResponseAction == IAuthenticationAction::SET_HTTP_RESPONSE_HEADER) {
+                header("{$_SERVER['SERVER_PROTOCOL']} 401 Unauthorized");
+                exit;
+            }            
         }
     }
 
