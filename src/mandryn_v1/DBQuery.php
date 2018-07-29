@@ -112,6 +112,7 @@ class DBQuery extends DB
     private $commandType;
     private $transactionEnable;
     private $executionStatusArray;
+    private $num_rows;
     
     public function __construct($host, $username, $password, $database_name, $is_DB_connection_limit_enforced=true)
     {        
@@ -127,9 +128,9 @@ class DBQuery extends DB
         
         parent::__construct($host, $username, $password, $database_name);
         $this->db_sql_params = array();
-        DBQuery::$totalInstance+=1;        
-        
+        DBQuery::$totalInstance+=1;               
         $this->executionStatusArray=[];
+        $this->num_rows=0;
     }
     
     public function enableTransaction(){
@@ -188,10 +189,11 @@ class DBQuery extends DB
                     throw new Exception($errMsg);
                 } else if ($this->db_result === FALSE) {
                     $errMsg = 'Database error';
-                    throw new Exception($errMsg);
+                    throw new Exception($errMsg);                    
                 }
             } else {
                 $this->commandType = "query";
+                $this->num_rows= mysqli_num_rows($this->db_result);
             }
         }catch (Exception $e) {
             header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
@@ -286,6 +288,10 @@ class DBQuery extends DB
                 return FALSE;
             }
         }
+    }
+    
+    public function getNumRows(){
+        return $this->num_rows;
     }
     
     public function getSqlString()
