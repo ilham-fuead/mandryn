@@ -179,7 +179,7 @@ class Select extends Field {
         $optionsHTML = '';
         if (sizeof($this->select_options) > 0) {
             foreach ($this->select_options as $option) {
-                if ($option['value'] == $this->select_selectedValue) {
+                if ($option['value'] === $this->select_selectedValue) {
                     $optionsHTML .= "<option value='{$option['value']}' selected='selected'>{$option['text']}</option>\n";
                 } else {
                     $optionsHTML .= "<option value='{$option['value']}'>{$option['text']}</option>\n";
