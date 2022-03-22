@@ -228,9 +228,12 @@ class MagicInput extends MagicObject {
      * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
      */
     public function copy_GET_properties($apply_sanitize = true) {
-
-        $GET_array = $apply_sanitize ? filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING) : $_GET;
-
+        $GET_array = [];
+        
+        if($this->is_non_empty_array($_GET)){
+            $GET_array = $apply_sanitize ? filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING) : $_GET;
+        }        
+        
         $this->copyArrayProperties($GET_array, true);
     }
 
@@ -239,9 +242,12 @@ class MagicInput extends MagicObject {
      * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
      */
     public function copy_POST_properties($apply_sanitize = true) {
-
-        $POST_array = $apply_sanitize ? filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING) : $_POST;
-
+        $POST_array = [];
+        
+        if($this->is_non_empty_array($_POST)){
+            $POST_array = $apply_sanitize ? filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING) : $_POST;
+        }
+        
         $this->copyArrayProperties($POST_array, true);
     }
 
@@ -261,6 +267,14 @@ class MagicInput extends MagicObject {
 
         if (is_array($input)) {
             $this->copyArrayProperties($input);
+        }
+    }
+    
+    private function is_non_empty_array($array){
+        if(is_array($array)){
+            return count($array)>0?true:false;
+        }else{
+            return false;
         }
     }
 
