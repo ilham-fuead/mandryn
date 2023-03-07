@@ -185,12 +185,13 @@ class DOQuery extends DB
     private function performQuery()
     {
         $dbh=$this->db_link;
-       
-        $this->db_result =$dbh->query($this->db_sql)->fetchAll();
+        //$this->db_result =$dbh->query($this->db_sql);
+        $this->db_result =$dbh->query($this->db_sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function runSQL_Query()
     {
+        $this->num_rows=0;
         $this->performQuery();
         try {
             if (is_bool($this->db_result)) {
@@ -262,7 +263,9 @@ class DOQuery extends DB
 
     public function yieldRow($resulttype = MYSQLI_ASSOC)
     {
-        while ($row = mysqli_fetch_array($this->db_result, $resulttype)) {
+        $dbh=$this->db_link;
+        
+        foreach ($dbh->query($this->db_sql)->fetchAll(PDO::FETCH_ASSOC) as $row){
             yield $row;
         }
     }
@@ -299,7 +302,7 @@ class DOQuery extends DB
     public function isHavingRecordRow()
     {
         if ($this->commandType == "query") {
-            if (mysqli_num_rows($this->db_result) > 0) {
+            if ($this->num_rows > 0) {
                 return TRUE;
             } else {
                 return FALSE;
