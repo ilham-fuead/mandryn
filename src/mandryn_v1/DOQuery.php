@@ -1,4 +1,13 @@
 <?php
+/*
+ * Version    : 1.0 [ Released Date: 6 Mac 2023 ]
+ * Developer  : Mohd Ilhammuddin Bin Mohd Fuead
+ * Description/Remarks:
+ *                     A Utility class that wrapped PDO class with easy to use 
+ *                     methods, added more features & best practiced for 
+ *                     data object database manipulation. 
+ *
+ */
 
 class ConnectionDetail {
 
@@ -58,10 +67,9 @@ class DB {
             $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->db_link = $dbh;
         } catch (PDOException $e) {
-            //echo $e->getMessage();
+            
             header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
             exit;
-            //die($e->getMessage());
         }
     }
 
@@ -100,7 +108,11 @@ class DOQuery extends DB {
 
     const MODE = 'DEV'; // DEV||PROD
     const MAX_TOTAL_INSTANCE = 3;
-
+    
+    const SQL_TYPE_COMMAND = 0;
+    const SQL_TYPE_QUERY = 1;
+    
+    
     private static $totalInstance = 0;
     private $db_sql;
     private $db_sql_params;
@@ -182,26 +194,11 @@ class DOQuery extends DB {
         $this->db_statement = $this->db_link->query($this->db_sql);
     }
 
-    public function runSQL_Query() {
+    public function runDataQuery() {
         $this->num_rows = 0;
-        $this->performQuery();
-        try {
-            if (is_bool($this->db_result)) {
-                $this->commandType = "non query";
-                if (DBQuery::MODE == 'DEV' && $this->db_result === FALSE) {
-                    $errMsg = 'Database error: ' . mysqli_error($this->db_link);
-                    throw new Exception($errMsg);
-                } else if ($this->db_result === FALSE) {
-                    $errMsg = 'Database error';
-                    throw new Exception($errMsg);
-                }
-            } else {
-                $this->commandType = "query";
-            }
-        } catch (Exception $e) {
-            header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
-            exit;
-        }
+        $this->commandType= DOQuery::SQL_TYPE_QUERY;
+        
+        $this->performQuery();        
     }
 
     private function countNumRows() {
@@ -210,16 +207,18 @@ class DOQuery extends DB {
             $this->num_rows = $this->db_link->query("SELECT COUNT(*) FROM ({$this->db_sql}) AS qtbl")->fetchColumn();
         }
     }
-
-    public function executeNon_Query() {
-        $this->performQuery();
-        $this->commandType = "non query";
-
-        if ($this->transactionEnable) {
-            $this->recordExecutionStatus();
+    
+    public function execDataCommand(){
+        $this->commandType= DOQuery::SQL_TYPE_COMMAND;
+        try{
+            $this->db_result=$this->db_link->exec($this->db_sql);
+        }catch (PDOException $e) {
+            
+            header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
+            exit;
         }
     }
-
+    
     private function recordExecutionStatus() {
         $SQL_execution = new MagicObject();
 
@@ -236,7 +235,7 @@ class DOQuery extends DB {
     }
 
     public function getQueryResult() {
-        if ($this->commandType == "query") {
+        if ($this->commandType == DOQuery::SQL_TYPE_QUERY) {
             return $this->db_result;
         } else {
             throw new Exception('No recordset returned!');
@@ -244,21 +243,29 @@ class DOQuery extends DB {
     }
 
     public function getCommandStatus() {
-        if ($this->commandType == "non query") {
+        if ($this->commandType == DOQuery::SQL_TYPE_COMMAND) {
             return $this->db_result;
         } else {
-            throw new Exception('No command status returned, instead a recordset is returned');
+            throw new Exception('No command status returned!');
         }
     }
 
-    public function yieldRow($resulttype = PDO::FETCH_ASSOC) {
-        foreach ($this->db_link->query($this->db_sql)->fetchAll($resulttype) as $row) {
+    public function yieldRow($sql=null,$resulttype = PDO::FETCH_ASSOC) {
+        $localSql='';
+        
+        if($sql===null){
+            $localSql=$this->db_sql;
+        }else{
+            $localSql=$sql;
+        }
+        
+        foreach ($this->db_link->query($localSql)->fetchAll($resulttype) as $row) {
             yield $row;
         }
     }
 
     public function fetchRow($resulttype = PDO::FETCH_ASSOC) {
-        $row = $this->db_statement->fetch();
+        $row = $this->db_statement->fetch($resulttype);
 
         if (is_bool($row)) {
             $this->resetCursor();
@@ -288,7 +295,7 @@ class DOQuery extends DB {
     }
 
     public function isHavingRecordRow() {
-        if ($this->commandType == "query") {
+        if ($this->commandType == DOQuery::SQL_TYPE_QUERY) {
             if ($this->getNumRows() > 0) {
                 return TRUE;
             } else {
@@ -307,7 +314,7 @@ class DOQuery extends DB {
     }
 
     private function freeRecordset() {
-        if ($this->commandType == "query") {
+        if ($this->commandType == DOQuery::SQL_TYPE_QUERY) {
             if ($this->db_result && !is_bool($this->db_result)) {
                 $this->db_result = null;
             }
@@ -325,30 +332,11 @@ class DOQuery extends DB {
 }
 
 /*
- * 
- * 
- * Version    : 1.3 [ Released Date: 10 June 2015 ]
- * Updated By : Mohd Ilhammuddin Bin Mohd Fuead
- * Remarks    : Added Error handling(Try Catch Exception) statement 
- *              when executing mysqli_connect and display error accordingly        
- *
- * Version    : 1.2 [ Released Date: 08 June 2012 ]
- * Updated By : Mohd Ilhammuddin Bin Mohd Fuead
- * Remarks    : i)  Solved bug on freeing a non return resultset query.
- *              ii) Set generic error regarding mysqli error due to incorrect SQL
- *
- * Version    : 1.1 [ Released Date: 27 Oct 2011 ]
- * Updated By : Mohd Ilhammuddin Bin Mohd Fuead
- * Remarks    : Added new helper method (freeRecordset) for better memory management
- *              where returned and used recordset will immediately free from memory 
- *              when new SQL statement set to DBQuery object sql property.
- *
- * Version    : 1.0 [ Released Date: 5 May 2011 ]
+ * Version    : 1.0 [ Released Date: 6 Mac 2023 ]
  * Developer  : Mohd Ilhammuddin Bin Mohd Fuead
  * Description/Remarks:
- *                     A Utility class for constructing valid SQL statement to
- *                     be consume by other main classes. This version support all
- *                     standard SQL Command with limitation on single table only operation.
+ *                     A Utility class that wrapped PDO class with easy to use 
+ *                     methods, added more features & best practiced for 
+ *                     data object manipulation. 
  *
  */
-?>
