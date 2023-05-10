@@ -257,14 +257,14 @@ class MagicInput extends MagicObject {
      */
     public function copy_RAW_JSON_properties($apply_sanitize = true) {
         $request = file_get_contents('php://input');
-
+        
         /* 2nd parameter supply true to convert request as input array, false as input object */
         $input = json_decode($request, true);
-
+        
         if ($apply_sanitize && is_array($input)) {
             $input = filter_var_array($input, FILTER_SANITIZE_STRING);
         }
-
+        
         if (is_array($input)) {
             $this->copyArrayProperties($input);
         }
