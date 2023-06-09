@@ -124,6 +124,7 @@ class DOQuery extends DB {
     private $num_rows;
 
     public function __construct($host, $username, $password, $database_name, $is_DB_connection_limit_enforced = true, $db_driver = 'mysql') {
+        $this->transactionEnable=false;
         try {
             if (DOQuery::$totalInstance > DOQuery::MAX_TOTAL_INSTANCE && $is_DB_connection_limit_enforced) {
                 $errMsg = 'DBQuery error : Maximum connection limit exceeded!';
@@ -142,31 +143,32 @@ class DOQuery extends DB {
     }
 
     public function enableTransaction() {
-        $this->transactionEnable = TRUE;
-        mysqli_autocommit($this->db_link, FALSE);
+        $this->transactionEnable = true;     
+        $this->db_link->beginTransaction();
     }
 
+    //TODO: Mark for remove
     public function disableTransaction() {
-        $this->transactionEnable = FALSE;
-        mysqli_autocommit($this->db_link, TRUE);
+        $this->transactionEnable = false;
     }
 
     public function commitTransaction() {
-        $clearedStatusFlag = TRUE;
+        $clearedStatusFlag = true;
         foreach ($this->executionStatusArray as $execution) {
-            if ($execution->status === FALSE) {
-                $clearedStatusFlag = FALSE;
+            if ($execution->status === false) {
+                $clearedStatusFlag = false;
                 break;
             }
         }
-
+        
         $copiedExecutionStatusArray = $this->executionStatusArray;
         $this->executionStatusArray = [];
 
         if ($clearedStatusFlag === TRUE) {
-            return mysqli_commit($this->db_link);
+            $this->disableTransaction();
+            return $this->db_link->commit();
         } else {
-            mysqli_rollback($this->db_link);
+            $this->db_link->rollback();
             return $copiedExecutionStatusArray;
         }
     }
@@ -179,6 +181,7 @@ class DOQuery extends DB {
         //$this->freeRecordset();
         $this->db_sql = $sql;
         $dbh = $this->db_link;
+        
         $this->db_statement = $dbh->query($this->db_sql);
     }
 
@@ -208,30 +211,31 @@ class DOQuery extends DB {
         }
     }
     
-    public function execDataCommand(){
+    public function execDataCommand($db_sql){        
+       
         $this->commandType= DOQuery::SQL_TYPE_COMMAND;
+        
+        $CmdStatus=new MagicObject();
+                
+        $CmdStatus->status=true;
+        $CmdStatus->message='success';
+        
         try{
-            $this->db_result=$this->db_link->exec($this->db_sql);
+            $this->db_result=$this->db_link->exec($db_sql);
         }catch (PDOException $e) {
-            
-            header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
-            exit;
+            $CmdStatus->status=false;
+            $CmdStatus->message=$e->getMessage();
+            //header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
+            //exit;
+        }
+
+        if($this->transactionEnable){
+            $this->recordExecutionStatus($CmdStatus);
         }
     }
     
-    private function recordExecutionStatus() {
-        $SQL_execution = new MagicObject();
-
-        if ($this->getCommandStatus() === TRUE) {
-            $SQL_execution->status = TRUE;
-            $SQL_execution->message = "success";
-        } else {
-            $SQL_execution->status = FALSE;
-            $SQL_execution->message = mysqli_error($this->getLink());
-            ;
-        }
-
-        $this->executionStatusArray[] = $SQL_execution;
+    private function recordExecutionStatus($CmdStatus) {
+        $this->executionStatusArray[] = $CmdStatus;
     }
 
     public function getQueryResult() {
