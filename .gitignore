@@ -1,7 +1,10 @@
 /testing/
 /test/
 /nbproject/
+.project
 /settings/
+/.settings/
 /vendor/
 /config/
 /.idea/
+.buildpath

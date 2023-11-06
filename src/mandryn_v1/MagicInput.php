@@ -104,7 +104,13 @@ class MagicInput extends MagicObject {
             /** TODO: Check current definition with actual input item * */
             if (array_key_exists($def['name'], parent::toArray())) {
                 $inputValue = parent::toArray()[$def['name']];
-                if (($inputValue == null || trim($inputValue) == '') && $inputValue != '0') {
+                
+                if($def['type']==="a" || $def['type']==="o"){
+                    if(!isset($inputValue)){
+                        $this->logNonCompliedInput($def['name'], 'Empty or null' . $inputValue);
+                        continue;
+                    }
+                }else if (($inputValue == null || trim($inputValue) == '') && $inputValue != '0') {
                     $this->logNonCompliedInput($def['name'], 'Empty or null' . $inputValue);
                     continue;
                 }
@@ -150,6 +156,19 @@ class MagicInput extends MagicObject {
                 $format = 'Y-m-d H:i:s';
                 $this->datetimeTypeChecker($inputName, $inputValue, 'Invalid datetime', $format);
                 break;
+            case 'a':
+                if (!is_array($inputValue)) {
+                    $this->logNonCompliedInput($inputName, 'Not an array');
+                }
+                break;
+            case 'o':
+                $inputValue=(object)$inputValue;
+                if (!is_object($inputValue)) {
+                    $this->logNonCompliedInput($inputName, 'Not an object');
+                }else{
+                    $this->property[$inputName]=(object)$this->property[$inputName];
+                }
+                break;
             case 'u':
             case 's':
             case '':
@@ -187,9 +206,12 @@ class MagicInput extends MagicObject {
         }
     }
 
-    public function isInputsComplied() {
+    public function isInputsComplied($setValidityHeader=false) {
         $this->applyInputDefinition();
         if (count($this->nonCompliedInputList) > 0) {
+            if($setValidityHeader){
+                http_response_code(400);
+            }            
             return false;
         } else {
             return true;
