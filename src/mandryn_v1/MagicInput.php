@@ -8,7 +8,7 @@
  * @category   Utility, Security
  * @package    Mandryn/Mandryn
  * @author     Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
- * @copyright  2017-2022 The Mandryn Team
+ * @copyright  2017-2023 The Mandryn Team
  * @license    http://www.php.net/license/3_01.txt  PHP License 3.01
  * @version    Release: 1.3.2
  * @since      Class available since Release 2.1.0
@@ -19,6 +19,9 @@ class MagicInput extends MagicObject {
     private $nonCompliedInputList;
     private $isDefinitionExist;
     private $removeNonDefineInput;
+    
+    public const STANDARD_HEADER=1;
+    public const CUSTOM_HEADER=2;
 
     public function __construct() {
         $this->inputDefinition = [];
@@ -41,6 +44,8 @@ class MagicInput extends MagicObject {
      * Notes: 
      * 
      *    i. inputType(string) to denote input datatype/format as:
+     *       [a] Array
+     *       [o] Object
      *       [i] Integer
      *       [f] Float
      *       [n] Numeric(integer/float) 
@@ -48,7 +53,6 @@ class MagicInput extends MagicObject {
      *       [dt] Datetime(yyyy-mm-dd HH:mm:ss)
      *       [s] String
      *       [e] E-mail
-     *       [u] Unknown
      *      
      *   ii. requiredStatus is use to denote input is mandatory
      *
@@ -72,6 +76,11 @@ class MagicInput extends MagicObject {
         $this->nonCompliedInputList[] = ['name' => $inputName, 'error' => $errorMsg];
     }
 
+    /**
+     *
+     * This method will return list of non complied input in array format:
+     * ['name' => $inputName, 'error' => $errorMsg]
+     */
     public function getNonCompliedInputList() {
         return $this->nonCompliedInputList;
     }
@@ -206,10 +215,10 @@ class MagicInput extends MagicObject {
         }
     }
 
-    public function isInputsComplied($setValidityHeader=false) {
+    public function isInputsComplied($setValidityResponseHeader=false) {
         $this->applyInputDefinition();
         if (count($this->nonCompliedInputList) > 0) {
-            if($setValidityHeader){
+            if($setValidityResponseHeader){
                 http_response_code(400);
             }            
             return false;
@@ -289,6 +298,92 @@ class MagicInput extends MagicObject {
         
         if (is_array($input)) {
             $this->copyArrayProperties($input);
+        }
+    }
+    
+    /**
+     *
+     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
+     */
+    public function read_JSON_request($apply_sanitize = true) {
+        $this->copy_RAW_JSON_properties($apply_sanitize);
+    }
+    
+    /**
+     *
+     * @param array $headerKeys list all header keys that read into MagicInput Object. Key name must
+     * be in UPPERCASE as per convention. In case of key name provided in LOWERCASE, it will be converted to UPPERCASE.
+     * @param integer $headerType set header type between standard or custom headers to read. Default to standard header (1).
+     * @param boolean $apply_sanitize sanitize input before assign to object. Default to true.
+     */
+    public function read_HTTP_request_headers(array $headerKeys=[], $headerType=MagicInput::STANDARD_HEADER, $apply_sanitize = true) {
+        
+        $SERVER_array = $apply_sanitize ? filter_input_array(INPUT_SERVER, FILTER_SANITIZE_STRING) : $_SERVER;
+        
+        //print_r($_SERVER);
+        
+        $selected_SERVER_array=[];
+        
+        if($headerType){
+            $this->copyArrayProperties($SERVER_array, true);
+        }else{            
+            
+            $i=0;
+            $preservedHTTPIndex=[];
+            
+            foreach ($headerKeys as &$key){
+                $key=strtoupper($key);
+                
+                /*TODO: Prepend HTTP_ if key name don't prepended with HTTP_
+                if((strpos($key, 'HTTP_') === 0) || (strpos($key, 'HTTP-') === 0)){
+                    //String starts with HTTP_/HTTP-
+                    $preservedHTTPIndex[]=$i;
+                }else{
+                    $key='HTTP_' . $key;
+                }
+                */
+                
+                $key='HTTP_' . $key;
+                
+                $key=str_replace('-', '_', $key);
+                $i++;
+                
+            }
+            
+            //print_r($headerKeys);
+            
+            /*TODO: Retain only $_SERVER array that match same keys as listed in custom REQUEST header list*/
+            $selected_SERVER_array = array_intersect_key($SERVER_array, array_flip($headerKeys));
+            
+            //print_r($selected_SERVER_array);
+            
+            $removedPrependHTTPKeys=[];
+            
+            $i=0;
+            
+            foreach ($selected_SERVER_array as $key=>$value){
+                
+                if(in_array($i, $preservedHTTPIndex)){
+                    continue; 
+                }
+                
+                /*TODO: Find & remove prepended keys with HTTP so that listed expected header keys 
+                 *      can be added and available as MagicInput props.
+                 *      Previously prepended HTTP headers will be remove if not specified in 
+                 *      InputDefinition list.
+                 */     
+                if (substr($key, 0, 5) === 'HTTP_') {
+                    $key = substr($key, 5); 
+                    $removedPrependHTTPKeys[$key]=$value;
+                }       
+                
+            }
+            
+            //echo print_r($removedPrependHTTPKeys);
+            
+            $this->copyArrayProperties($removedPrependHTTPKeys, true);
+            
+            unset($_SERVER);
         }
     }
     
