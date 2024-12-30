@@ -231,7 +231,7 @@ class MagicInput extends MagicObject {
         $GET_array = [];
         
         if($this->is_non_empty_array($_GET)){
-            $GET_array = $apply_sanitize ? filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING) : $_GET;
+            $GET_array = $apply_sanitize ? filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS) : $_GET;
         }        
         
         $this->copyArrayProperties($GET_array, true);
@@ -245,7 +245,7 @@ class MagicInput extends MagicObject {
         $POST_array = [];
         
         if($this->is_non_empty_array($_POST)){
-            $POST_array = $apply_sanitize ? filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING) : $_POST;
+            $POST_array = $apply_sanitize ? filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS) : $_POST;
         }
         
         $this->copyArrayProperties($POST_array, true);
@@ -262,7 +262,7 @@ class MagicInput extends MagicObject {
         $input = json_decode($request, true);
 
         if ($apply_sanitize && is_array($input)) {
-            $input = filter_var_array($input, FILTER_SANITIZE_STRING);
+            $input = filter_var_array($input, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         }
 
         if (is_array($input)) {
