@@ -10,7 +10,7 @@
  * @author     Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
  * @copyright  2017-2022 The Mandryn Team
  * @license    http://www.php.net/license/3_01.txt  PHP License 3.01
- * @version    Release: 1.3.2
+ * @version    Release: 1.4.2
  * @since      Class available since Release 2.1.0
  */
 class MagicInput extends MagicObject {
@@ -48,6 +48,7 @@ class MagicInput extends MagicObject {
      *       [dt] Datetime(yyyy-mm-dd HH:mm:ss)
      *       [s] String
      *       [e] E-mail
+     *       [h] Request Header (alpha-numeric)
      *       [u] Unknown
      *      
      *   ii. requiredStatus is use to denote input is mandatory
@@ -80,6 +81,11 @@ class MagicInput extends MagicObject {
         $validInputList = [];
 
         foreach ($this->inputDefinition as $def) {
+
+            if($def['type'] == 'h') {
+                $def['name']=strtoupper(str_replace('-', '_', $def['name']));
+            }
+
             $validInputList[] = $def['name'];
         }
 
@@ -100,6 +106,12 @@ class MagicInput extends MagicObject {
         foreach ($this->inputDefinition as $def) {
 
             $inputValue = null;
+
+            /** TODO: Change input definition for request header to reflect actual header item read by PHP 
+             * with tranformation to Uppercase & changed from - to _ * */
+            if($def['type'] == 'h') {
+                $def['name']=strtoupper(str_replace('-', '_', $def['name']));
+            }
 
             /** TODO: Check current definition with actual input item * */
             if (array_key_exists($def['name'], parent::toArray())) {
@@ -150,9 +162,9 @@ class MagicInput extends MagicObject {
                 $format = 'Y-m-d H:i:s';
                 $this->datetimeTypeChecker($inputName, $inputValue, 'Invalid datetime', $format);
                 break;
+            case 'h':
             case 'u':
             case 's':
-            case '':
                 break;
         }
     }
@@ -268,6 +280,36 @@ class MagicInput extends MagicObject {
         if (is_array($input)) {
             $this->copyArrayProperties($input);
         }
+    }
+
+    public function copy_request_header_properties(): void
+    {
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if ($this->startsWith($key, 'HTTP_')) {
+                
+                // Remove the "HTTP_" prefix and format the header name properly, request hyphen converted to underscore
+                $headerName = substr($key, 5);
+                $headers[$headerName] = $value;
+
+            } elseif (in_array($key, ['CONTENT_TYPE', 'CONTENT_LENGTH', 'CONTENT_MD5','AUTHORIZATION'], true)) {
+                // Handle special cases without "HTTP_" prefix
+                $headerName = $key;
+                $headers[$headerName] = $value;
+            }
+        }
+       
+
+        if (is_array($headers)) {
+            $headers = filter_var_array($headers, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        
+            $this->copyArrayProperties($headers);
+        }
+    }
+
+    private function startsWith(string $haystack, string $needle): bool
+    {
+        return substr($haystack, 0, strlen($needle)) === $needle;
     }
     
     private function is_non_empty_array($array){
