@@ -8,7 +8,7 @@
  * @category   Utility, Security
  * @package    Mandryn/Mandryn
  * @author     Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
- * @copyright  2017-2022 The Mandryn Team
+ * @copyright  2017-2025 The Mandryn Team
  * @license    http://www.php.net/license/3_01.txt  PHP License 3.01
  * @version    Release: 1.4.2
  * @since      Class available since Release 2.1.0
@@ -19,13 +19,21 @@ class MagicInput extends MagicObject {
     private $nonCompliedInputList;
     private $isDefinitionExist;
     private $removeNonDefineInput;
+    private $DBQueryObj;
+    private $sanitizationForDB;
 
     public function __construct() {
         $this->inputDefinition = [];
         $this->nonCompliedInputList = [];
         $this->isDefinitionExist = false;
         $this->removeNonDefineInput = true;
+        $this->sanitizationForDB = false;
         parent::__construct();
+    }
+
+    public function sanitizeInputsForDBoperations(DBQuery $DBQueryObj) {
+        $this->DBQueryObj = $DBQueryObj;
+        $this->sanitizationForDB = true;
     }
 
     private function addInputDefinition($inputName, $inputType, $requiredStatus = false, $integrationAlias = '') {
@@ -48,7 +56,7 @@ class MagicInput extends MagicObject {
      *       [dt] Datetime(yyyy-mm-dd HH:mm:ss)
      *       [s] String
      *       [e] E-mail
-     *       [h] Request Header (alpha-numeric)
+     *       [h] Request Header
      *       [u] Unknown
      *      
      *   ii. requiredStatus is use to denote input is mandatory
@@ -82,7 +90,7 @@ class MagicInput extends MagicObject {
 
         foreach ($this->inputDefinition as $def) {
 
-            if($def['type'] == 'h') {
+            if($def['type'] == 'h' || $def['type'] == 'hs') {
                 $def['name']=strtoupper(str_replace('-', '_', $def['name']));
             }
 
@@ -98,6 +106,25 @@ class MagicInput extends MagicObject {
         unset($validInputList);
     }
 
+    private function sanitizeForDB() {
+        $validInputList = [];
+
+        foreach ($this->inputDefinition as $def) {
+
+            if($def['type'] == 'h' || $def['type'] == 'hs') {
+                $def['name']=strtoupper(str_replace('-', '_', $def['name']));
+            }
+
+            $validInputList[] = $def['name'];
+        }
+
+        foreach ($this->property as $key => $val) {
+            if (in_array($key, $validInputList)) {
+                $this->{$key}=mysqli_real_escape_string($this->DBQueryObj->getLink(), $val);
+            }
+        }        
+    }
+
     private function applyInputDefinition() {
         /** TODO: Reset non-complied input list * */
         $this->nonCompliedInputList = [];
@@ -109,7 +136,7 @@ class MagicInput extends MagicObject {
 
             /** TODO: Change input definition for request header to reflect actual header item read by PHP 
              * with tranformation to Uppercase & changed from - to _ * */
-            if($def['type'] == 'h') {
+            if($def['type'] == 'h' || $def['type'] == 'hs') {
                 $def['name']=strtoupper(str_replace('-', '_', $def['name']));
             }
 
@@ -132,9 +159,16 @@ class MagicInput extends MagicObject {
             $this->inputTypeChecker($def['name'], $inputValue, $def['type']);
         }
 
+        /** TODO: If removeNonDefineInput is true, remove all input without definition * */
         if ($this->removeNonDefineInput) {
             $this->deleteInputWithoutDefinition();
         }
+
+        /** TODO: Sanitize inputs for database operations * */
+        if ($this->sanitizationForDB) {
+            $this->sanitizeForDB();
+        }
+
     }
 
     private function inputTypeChecker($inputName, $inputValue, $inputType = '') {
@@ -162,12 +196,22 @@ class MagicInput extends MagicObject {
                 $format = 'Y-m-d H:i:s';
                 $this->datetimeTypeChecker($inputName, $inputValue, 'Invalid datetime', $format);
                 break;
+            case 'hs':
+                $this->safeHeaderValueChecker($inputName, $inputValue, 'Unsecured header value');
+                break;
             case 'h':
             case 'u':
             case 's':
                 break;
         }
     }
+
+    private function safeHeaderValueChecker($inputName, $inputValue, $errMsg) {
+        
+        if (!ctype_alnum(str_replace(['-','_','.',',',':','/','@'],'',$inputValue))) {
+            $this->logNonCompliedInput($inputName, $errMsg);
+        }
+    }    
 
     private function datetimeTypeChecker($inputName, $inputValue, $errMsg, $format = '') {
         $d = DateTime::createFromFormat($format, $inputValue);
@@ -282,7 +326,7 @@ class MagicInput extends MagicObject {
         }
     }
 
-    public function copy_request_header_properties(): void
+    public function copy_request_header_properties($apply_sanitize = true): void
     {
         $headers = [];
         foreach ($_SERVER as $key => $value) {
@@ -301,7 +345,10 @@ class MagicInput extends MagicObject {
        
 
         if (is_array($headers)) {
-            $headers = filter_var_array($headers, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            if($apply_sanitize){
+                $headers = filter_var_array($headers, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            }            
         
             $this->copyArrayProperties($headers);
         }

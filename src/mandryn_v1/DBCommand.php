@@ -3,10 +3,10 @@
 /**
  * <p>Class to facilate database command operation such as insert,delete and update.</p>
  *  
- * @version 2.1.0
+ * @version 2.2.0
  * @category Database
  * @author Mohd Ilhammuddin Bin Mohd Fuead <ilham.fuead@gmail.com>
- * @copyright Copyright(c) 2017, Mandryn Team 
+ * @copyright Copyright(c) 2017-2025, Mandryn Team 
  */
 class DBCommand {
 
@@ -94,6 +94,13 @@ class DBCommand {
 
                 $type = $this->typeIntegrationMapper($def['type']);
                 $fieldName = $this->fieldNameSolver($def['name'], $def['alias']);
+
+                /** TODO: Change input definition for request header to reflect actual header item read by PHP 
+                 * with tranformation to Uppercase & changed from - to _ * */
+                if($def['type'] == 'h' || $def['type'] == 'hs') {
+                    $def['name']=strtoupper(str_replace('-', '_', $def['name']));
+                }
+                
 
                 if (in_array($def['name'], $excludeList)) {
                     continue;
@@ -205,6 +212,8 @@ class DBCommand {
                 return 'integer';
             case 's':
             case 'e':
+            case 'h':  
+            case 'hs':  
                 return 'string';
             case 'u':
             case '':
