@@ -122,7 +122,7 @@ class Query {
                 }
             }
         } elseif ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::PREPARE_STATEMENT) {
-            foreach ($this->updateFields as $fld) {
+            foreach ($this->insertFields as $fld) {
 
                 //fieldNames
                 $insertFieldsArray[] = $fld[0];
@@ -132,8 +132,8 @@ class Query {
             }
         }
 
-        $sqlStatement.='(' . implode(',', $insertFieldsArray) . ') ';
-        $sqlStatement.='VALUES (' . implode(',', $insertValuesArray) . ') ';
+        $sqlStatement.='(' . implode(',', $insertFieldsArray) . ')';
+        $sqlStatement.=' VALUES (' . implode(',', $insertValuesArray) . ')';
 
         return $sqlStatement;
     }
