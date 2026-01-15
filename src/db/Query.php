@@ -118,7 +118,7 @@ class Query {
                 if ($fld[2] === \Mandryn\db\constant\DataType::INT) {
                     $insertValuesArray[] = $fld[1];
                 } else {
-                    $insertFieldsArray[] = "'{$fld[1]}'";
+                    $insertValuesArray[] = "'{$fld[1]}'";
                 }
             }
         } elseif ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::PREPARE_STATEMENT) {

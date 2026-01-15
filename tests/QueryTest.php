@@ -22,4 +22,18 @@ class QueryTest extends TestCase
 
         $this->assertEquals($expectedSql, $actualSql);
     }
+
+    public function testGetQueryString_InsertSqlString_CorrectSql()
+    {
+        $query = new Query(QueryType::INSERT);
+        $query->setTable('users');
+        $query->setInsertField('name', 'John Doe', DataType::STR);
+        $query->setInsertField('email', 'john.doe@example.com', DataType::STR);
+        $query->setInsertField('age', 30, DataType::INT);
+
+        $expectedSql = "INSERT INTO users (name,email,age) VALUES ('John Doe','john.doe@example.com',30)";
+        $actualSql = $query->getQueryString(SqlStringType::SQL_STRING);
+
+        $this->assertEquals($expectedSql, $actualSql);
+    }
 }
