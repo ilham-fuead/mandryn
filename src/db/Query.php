@@ -209,7 +209,7 @@ class Query {
             if ($fld[1] === \Mandryn\db\constant\ConditionType::IS_NULL || $fld[1] === \Mandryn\db\constant\ConditionType::IS_NOT_NULL) {
                 $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]}";
             } else {
-                $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]} :{$fld[0]}";
+                $conditionFieldsArray[] = "{$appender}{$fld[0]} " . trim($fld[1]) . " :{$fld[0]}";
             }
         }
         return $conditionFieldsArray;

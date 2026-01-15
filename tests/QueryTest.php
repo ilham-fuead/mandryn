@@ -66,4 +66,34 @@ class QueryTest extends TestCase
 
         $this->assertEquals($expectedSql, $actualSql);
     }
+
+    public function testGetQueryString_UpdateSqlString_MultipleConditions_CorrectSql()
+    {
+        $query = new Query(QueryType::UPDATE);
+        $query->setTable('users');
+        $query->setUpdateField('status', 'inactive', DataType::STR);
+        $query->setConditionField('age', ConditionType::GREATER_THAN, 30, DataType::INT, AppenderOperator::NONE_OPR);
+        $query->setConditionField('name', ConditionType::LIKE, '%Doe', DataType::STR, AppenderOperator::AND_OPR);
+        $query->setConditionField('id', ConditionType::EQUAL, 1, DataType::INT, AppenderOperator::OR_OPR);
+
+        $expectedSql = "UPDATE users SET status='inactive' WHERE age>30 AND name LIKE '%Doe' OR id=1";
+        $actualSql = $query->getQueryString(SqlStringType::SQL_STRING);
+
+        $this->assertEquals($expectedSql, $actualSql);
+    }
+
+    public function testGetQueryString_UpdatePreparedStatement_MultipleConditions_CorrectSql()
+    {
+        $query = new Query(QueryType::UPDATE);
+        $query->setTable('users');
+        $query->setUpdateField('status', 'inactive', DataType::STR);
+        $query->setConditionField('age', ConditionType::GREATER_THAN, 30, DataType::INT, AppenderOperator::NONE_OPR);
+        $query->setConditionField('name', ConditionType::LIKE, '%Doe', DataType::STR, AppenderOperator::AND_OPR);
+        $query->setConditionField('id', ConditionType::EQUAL, 1, DataType::INT, AppenderOperator::OR_OPR);
+
+        $expectedSql = "UPDATE users SET status = :status WHERE age > :age AND name LIKE :name OR id = :id";
+        $actualSql = $query->getQueryString(SqlStringType::PREPARE_STATEMENT);
+
+        $this->assertEquals($expectedSql, $actualSql);
+    }
 }
