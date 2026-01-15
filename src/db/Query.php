@@ -118,11 +118,11 @@ class Query {
                 if ($fld[2] === \Mandryn\db\constant\DataType::INT) {
                     $insertValuesArray[] = $fld[1];
                 } else {
-                    $insertFieldsArray[] = "'{$fld[1]}'";
+                    $insertValuesArray[] = "'{$fld[1]}'";
                 }
             }
         } elseif ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::PREPARE_STATEMENT) {
-            foreach ($this->updateFields as $fld) {
+            foreach ($this->insertFields as $fld) {
 
                 //fieldNames
                 $insertFieldsArray[] = $fld[0];
@@ -132,8 +132,8 @@ class Query {
             }
         }
 
-        $sqlStatement.='(' . implode(',', $insertFieldsArray) . ') ';
-        $sqlStatement.='VALUES (' . implode(',', $insertValuesArray) . ') ';
+        $sqlStatement.='(' . implode(',', $insertFieldsArray) . ')';
+        $sqlStatement.=' VALUES (' . implode(',', $insertValuesArray) . ')';
 
         return $sqlStatement;
     }
@@ -209,7 +209,7 @@ class Query {
             if ($fld[1] === \Mandryn\db\constant\ConditionType::IS_NULL || $fld[1] === \Mandryn\db\constant\ConditionType::IS_NOT_NULL) {
                 $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]}";
             } else {
-                $conditionFieldsArray[] = "{$appender}{$fld[0]} {$fld[1]} :{$fld[0]}";
+                $conditionFieldsArray[] = "{$appender}{$fld[0]} " . trim($fld[1]) . " :{$fld[0]}";
             }
         }
         return $conditionFieldsArray;
