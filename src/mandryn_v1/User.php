@@ -40,6 +40,50 @@ interface IRedirectCode{
 }
 
 abstract class User {
+
+    /**
+     * Verify password against stored hash (bcrypt) or plaintext (legacy).
+     * If plaintext matches, upgrades to bcrypt in database.
+     *
+     * @param mysqli $link Database connection
+     * @param string $tableName User table name
+     * @param string $idField Username field name
+     * @param string $pwdField Password field name
+     * @param string $username Username to verify
+     * @param string $password Plain password to verify
+     * @return bool True if valid
+     */
+    public static function verifyPassword($link, $tableName, $idField, $pwdField, $username, $password) {
+        $stmt = mysqli_prepare($link, "SELECT $idField, $pwdField FROM $tableName WHERE $idField = ? AND jenis_ubah='1'");
+        mysqli_stmt_bind_param($stmt, 's', $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        $valid = false;
+        $userId = null;
+
+        if ($row = mysqli_fetch_assoc($result)) {
+            $storedPassword = $row[$pwdField];
+            $userId = $row[$idField];
+
+            if (str_starts_with($storedPassword, '$2y$') || str_starts_with($storedPassword, '$2a$') || str_starts_with($storedPassword, '$2b$')) {
+                $valid = password_verify($password, $storedPassword);
+            } else {
+                $valid = ($password === $storedPassword);
+                
+                if ($valid) {
+                    $newHash = password_hash($password, PASSWORD_BCRYPT);
+                    $updateStmt = mysqli_prepare($link, "UPDATE $tableName SET $pwdField = ? WHERE $idField = ?");
+                    mysqli_stmt_bind_param($updateStmt, 'ss', $newHash, $username);
+                    mysqli_stmt_execute($updateStmt);
+                    mysqli_stmt_close($updateStmt);
+                }
+            }
+        }
+        mysqli_stmt_close($stmt);
+        
+        return $valid ? $userId : false;
+    }
     private $userName;
     private $nama;
     private $emel;
@@ -66,6 +110,9 @@ abstract class User {
         $this->noAuthorizationForModulPage="none";
         $this->invalidRightRedirectPage="none";
         $this->byRightAuthorization=FALSE;
+        ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+        ini_set('session.cookie_httponly', 1);
+        ini_set('session.use_strict_mode', 1);
         session_start();
     }
 
@@ -78,26 +125,20 @@ abstract class User {
     }
 
     public function login( $uName, $uPassword ) {
-        $sql = "SELECT $this->idField
-                    FROM $this->tableName
-                    WHERE $this->idField = '$uName'
-                    AND $this->pwdField = '$uPassword' 
-                    AND jenis_ubah='1'"; //baru tambah 07052014
+        $link = $this->dbQueryObj->getLink();
+        $userId = self::verifyPassword($link, $this->tableName, $this->idField, $this->pwdField, $uName, $uPassword);
 
-        $this->dbQueryObj->setSQL_Statement( $sql );
-        $this->dbQueryObj->runSQL_Query();
-
-        if( mysqli_num_rows( $this->dbQueryObj->getQueryResult() ) > 0 ) {
-            $row = mysqli_fetch_assoc( $this->dbQueryObj->getQueryResult() );
-            $this->setAuthenticate( $row[$this->idField]);
+        if ($userId) {
+            session_regenerate_id(true);
+            $this->setAuthenticate($userId);
             $this->redirect("in");
         }
-
     }
 
     private function setAuthenticate( $uName) {
         $this->userName = $uName;
         $this->authenticationStatus = TRUE;
+        session_regenerate_id(true);
         $_SESSION['IDPengguna']=$this->userName;
     }
 
@@ -114,24 +155,19 @@ abstract class User {
     }
 
     public function getUserPageAuthorization($uName,$pageID) {
-        $sql = "SELECT AccessRolesID,AccessRightID
-                    FROM AccessRight
-                    WHERE IDpengguna = '$uName'
-                    AND AccessRolesID = '$pageID'";
+        $link = $this->dbQueryObj->getLink();
+        $stmt = mysqli_prepare($link, "SELECT AccessRolesID,AccessRightID FROM AccessRight WHERE IDpengguna = ? AND AccessRolesID = ?");
+        mysqli_stmt_bind_param($stmt, 'ss', $uName, $pageID);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
 
-        $this->dbQueryObj->setSQL_Statement( $sql );
-//        echo $sql;
-//        exit(0);
-        $this->dbQueryObj->runSQL_Query();
-
-        if( mysqli_num_rows( $this->dbQueryObj->getQueryResult() ) > 0 ) {
-            $row=mysqli_fetch_assoc($this->dbQueryObj->getQueryResult());
-            $this->initializeValidPageAuthorization($uName,$row['AccessRolesID'],$row['AccessRightID']);
+        if ($row = mysqli_fetch_assoc($result)) {
+            $this->initializeValidPageAuthorization($uName, $row['AccessRolesID'], $row['AccessRightID']);
+            mysqli_stmt_close($stmt);
             return TRUE;
-        }else {
-            return FALSE;
         }
-
+        mysqli_stmt_close($stmt);
+        return FALSE;
     }
 
     private function initializeValidPageAuthorization($userName,$authorisedPageID,$authorisedPageRight) {
@@ -143,7 +179,6 @@ abstract class User {
         $SQLQueryObj=new SQLQuery();
         $SQLQueryObj->setSELECTQuery('pengguna');
         $SQLQueryObj->addReturnField('IDpengguna');
-        $SQLQueryObj->addReturnField('katalaluan');
         $SQLQueryObj->addReturnField('nama');
         $SQLQueryObj->addReturnField('emel');
         $SQLQueryObj->addReturnField('unit');
@@ -186,11 +221,11 @@ abstract class User {
         $this->authenticationStatus = FALSE;
 
         if($this->getInSessionStatus()==TRUE) {
+            session_regenerate_id(true);
             session_unset();
             session_destroy();
             session_write_close();
             setcookie(session_name(),'',0,'/');
-            session_regenerate_id(true);
             $this->setRedirectFiles();
         }
         $this->redirect("out");
