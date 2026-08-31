@@ -88,6 +88,9 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
         $this->byRightAuthorization = FALSE;
         $this->httpResponseAction = $httpResponseAction;
         $this->userDetails = [];
+        ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+        ini_set('session.cookie_httponly', 1);
+        ini_set('session.use_strict_mode', 1);
         session_start();
     }
 
@@ -124,6 +127,7 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
     {
         $this->userName = $uName;
         $this->authenticationStatus = TRUE;
+        session_regenerate_id(true);
         $_SESSION['IDPengguna'] = $this->userName;
     }
 
@@ -161,24 +165,19 @@ abstract class Login implements IRedirectType, ISecurityLevel, IRightLevel, IAct
 
     public function getUserPageAuthorization($uName, $pageID)
     {
-        $sql = "SELECT AccessRolesID,AccessRightID
-                    FROM AccessRight
-                    WHERE IDpengguna = '$uName'
-                    AND AccessRolesID = '$pageID'";
+        $link = $this->dbQueryObj->getLink();
+        $stmt = mysqli_prepare($link, "SELECT AccessRolesID,AccessRightID FROM AccessRight WHERE IDpengguna = ? AND AccessRolesID = ?");
+        mysqli_stmt_bind_param($stmt, 'ss', $uName, $pageID);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
 
-        $this->dbQueryObj->setSQL_Statement($sql);
-//        echo $sql;
-//        exit(0);
-        $this->dbQueryObj->runSQL_Query();
-
-        if (mysqli_num_rows($this->dbQueryObj->getQueryResult()) > 0) {
-            $row = mysqli_fetch_assoc($this->dbQueryObj->getQueryResult());
+        if ($row = mysqli_fetch_assoc($result)) {
             $this->initializeValidPageAuthorization($uName, $row['AccessRolesID'], $row['AccessRightID']);
+            mysqli_stmt_close($stmt);
             return TRUE;
-        } else {
-            return FALSE;
         }
-
+        mysqli_stmt_close($stmt);
+        return FALSE;
     }
 
     private function initializeValidPageAuthorization($userName, $authorisedPageID, $authorisedPageRight)
