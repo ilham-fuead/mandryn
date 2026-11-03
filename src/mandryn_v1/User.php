@@ -1,6 +1,7 @@
 <?php
 include_once 'SQLQuery.php';
 
+if (!interface_exists('IRedirectType')) {
 interface IRedirectType {
     const AFTER_LOGIN_TYPE="in";
     const AFTER_LOGOUT_TYPE="out";
@@ -38,7 +39,7 @@ interface IRedirectCode{
     CONST INVALID_MODULE_ROLE=640;
     CONST INVALID_MODULE_RIGHT=650;
 }
-
+}
 abstract class User {
 
     /**
