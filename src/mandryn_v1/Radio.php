@@ -10,20 +10,8 @@
  * @copyright [Closed Distribution] e-SILA 2013, OSS Developer Team, SD, BPM, JPA 08/03/2013 
  */
 
-interface ISortingColumn{
-const COLUMN_VALUE=1;
-const COLUMN_LABEL=2;
-}
-
-interface ISortingOrder{
-const ASC='ASC';
-const DESC='DESC';
-}
-
-interface ILayoutFlow{
-    const HORIZONTAL=1;
-    const VERTICAL=2;
-}
+// ISortingColumn / ISortingOrder are defined in Checkbox.php (shared).
+// ILayoutFlow defined in Checkbox.php (shared).
 
 class Radio extends Field {
 

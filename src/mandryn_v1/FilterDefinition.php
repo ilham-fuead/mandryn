@@ -15,7 +15,7 @@ class FilterDefinition {
     const filterArray = [
         "int" => FILTER_VALIDATE_INT,
         "flo" => FILTER_VALIDATE_FLOAT,
-        "str" => FILTER_SANITIZE_STRING
+        "str" => FILTER_DEFAULT
     ];
 
     public function __construct($autoSanitize = false) {
