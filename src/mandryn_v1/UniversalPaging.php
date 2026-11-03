@@ -57,10 +57,12 @@ abstract class UniversalPaging implements IPagingType
     protected $mixedDataTypeArray;
     private $useMemoryTable;
     private $useBlindMode;
+    private $pagePropertyInitialized = false;
 
     const USE_MEM_ENG = true;
     const USE_DISK_ENG = false;
     const TBL_NAME_PREPEND = 'tbl_mem_';
+    const BLIND_MAX_PAGES = 100;
 
     public function __construct(DBQuery $DBQueryObj)
     {
@@ -86,8 +88,9 @@ abstract class UniversalPaging implements IPagingType
         $this->sqlStatement = $sqlStatement;
     }
 
-    public function setUseTmpMemEng()
+    public function setUseTmpMemEng($use = true)
     {
+        $this->useMemoryTable = (bool) $use;
     }
 
     public function setPagingProperty($IPagingType, $rowPerPage = 0, $UNIVERSAL_PAGING_USE_MEMORY_TABLE = false, $UNIVERSAL_PAGING_USE_BLIND_MODE = false)
@@ -110,15 +113,17 @@ abstract class UniversalPaging implements IPagingType
 
     private function initPageProperty()
     {
-        $testing = false;
+        if ($this->pagePropertyInitialized) {
+            return;
+        }
+        $this->pagePropertyInitialized = true;
         $conn = $this->connectionDetailObj;
 
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
 
         // TODO: Construct Memory Table
         if ($this->useMemoryTable && $this->pagingInfoObj->memTableName == '') {
-            $arr = ['i', 'l', 'h', 'a', 'm', '29', '01', '1979'];
-            $tblName = 'tbl_mem_' . $arr[rand(0, 7)] . $arr[rand(0, 7)];
+            $tblName = 'tbl_mem_' . bin2hex(random_bytes(4));
             $generate_tbl = false;
 
             $cmdSetting1 = 'SET GLOBAL tmp_table_size = 40894464 * 4'; //40MB * 4
@@ -193,12 +198,7 @@ abstract class UniversalPaging implements IPagingType
                 } else {
                     $TotalPage = 1;
                 }
-                if ($testing) {
-                    echo 'Total Record: ' . $TotalRowsPerSQL . '<p>';
-                    echo 'Total Row/Page: ' . $TotalRowPerPage . '<p>';
-                    echo 'Total Page: ' . $TotalPage . '<p>';
-                    echo 'Mod Value(extra field): ' . $modValue . '<p>';
-                }
+
                 $this->pagingInfoObj->totalRow = $TotalRowsPerSQL;
                 $this->pagingInfoObj->totalPage = $TotalPage;
             } else {
@@ -220,9 +220,8 @@ abstract class UniversalPaging implements IPagingType
 
         if ($DBQueryObj->getCommandStatus()) {
             return true;
-        } else {
-            throw new Exception($customErrorString);
         }
+        return false;
     }
 
     private function clearMemoryTable($memTableName, DBQuery $DBQueryObj)
@@ -294,11 +293,6 @@ abstract class UniversalPaging implements IPagingType
             $endRow = $this->pagingInfoObj->totalRow - $offSetToZeroIndex;
         }
 
-        if ($testing == 1) {
-            echo 'Current Page: ' . $currentPage . '<p>';
-            echo 'start:' . $startRow;
-            echo '<br>end:' . $endRow . '<p><p>';
-        }
 
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
 
@@ -310,16 +304,9 @@ abstract class UniversalPaging implements IPagingType
 
         $DBQueryObj->setSQL_Statement($this->sqlStatement . " limit $startRow,$limitRow");
 
-        if ($testing == 1) {
-            echo 'SQL: ' . $this->sqlStatement . " limit $startRow,$limitRow";
-            echo "<p>";
-        }
 
         $DBQueryObj->runSQL_Query();
 
-        if ($testing == 1) {
-            echo '<p>Page ' . $currentPage . '<p>';
-        }
 
         $rowCounter = $startRow + 1;
 
@@ -362,8 +349,8 @@ abstract class UniversalPaging implements IPagingType
         $currentPage = $setCurrentPage;
         $offSetToZeroIndex = 1;
 
-        //BETA
-        $TotalPage = 100;
+        //BETA: blind mode does not know total pages; cap recursion to a sane default.
+        $TotalPage = self::BLIND_MAX_PAGES;
 
         $TotalRowPerPage = $this->pagingInfoObj->totalRowPerPaging;
 
