@@ -2,9 +2,7 @@
 // examples/paging-manual.php — MANUAL + blind-mode paging endpoint (JSON)
 require __DIR__ . '/../vendor/autoload.php';
 
-use Mandryn\db\DBQuery;
-use Mandryn\mandryn_v1\UniversalPaging;
-use Mandryn\mandryn_v1\IPagingType;
+// DBQuery, UniversalPaging, IPagingType are global (autoloaded from src/mandryn_v1)
 
 class UserPager extends UniversalPaging
 {
@@ -33,6 +31,18 @@ $db = new DBQuery('localhost', 'user', 'pass', 'mydb');
 $pager = new UserPager($db);
 $pager->setSQLStatement('SELECT IDpengguna, nama, emel FROM pengguna ORDER BY IDpengguna');
 $pager->setPagingProperty(IPagingType::MANUAL, $perPage, false, $blind);
+
+if (!$blind) {
+    $c = new DBQuery('localhost', 'user', 'pass', 'mydb');
+    $c->setSQL_Statement('SELECT COUNT(*) AS c FROM pengguna');
+    $c->runSQL_Query();
+    $tr = (int) mysqli_fetch_assoc($c->getQueryResult())['c'];
+    $info = new PagingInfo();
+    $info->totalRow = $tr;
+    $info->totalPage = (int) ceil($tr / $perPage);
+    $pager->setPageProperty($info);
+}
+
 $pager->setPagingDelay(0);
 
 // In blind mode we don't know totals; the Vue side infers "has next" from row count.
