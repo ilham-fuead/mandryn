@@ -107,7 +107,8 @@ $pager->startPaging($page);
 - **AUTO_VIRTUAL**: runs `COUNT`-equivalent via `mysqli_num_rows` on full result, computes pages, then recursively renders each page with `LIMIT start,n`. Delays between pages via `sleep`/`usleep`.
 - **MANUAL**: renders a single page from `$currentPage`; no counting. Caller manages totals.
 - **Blind mode** (`useBlindMode=true` in `setPagingProperty`): skips counting, pages until an empty result (cap `BLIND_MAX_PAGES = 100`).
-- **Memory table** (`useMemTable=true` or `setUseTmpMemEng(true)`): builds a `MEMORY`-engine temp table from your SQL for faster re-reads. Requires `CREATE TABLE` + `SET GLOBAL` privileges.
+- **Memory table** (`useMemTable=true` or `setUseTmpMemEng(true)`): AUTO_VIRTUAL mode only. Builds a `MEMORY`-engine temp table from your SQL for faster re-reads. Requires `CREATE TABLE` + `SET GLOBAL` privileges.
+- **Blind mode** (`useBlindMode=true`): can pair with MANUAL mode. Pages until an empty result; no upfront row count. Cap `BLIND_MAX_PAGES = 100`.
 
 ## SQA notes
 
