@@ -167,10 +167,14 @@ abstract class UniversalPaging implements IPagingType
             $TotalPage = 0;
 
             $TotalRowPerPage = $this->pagingInfoObj->totalRowPerPaging;
+            if ($TotalRowPerPage <= 0) {
+                $TotalRowPerPage = 1;
+            }
 
-            if (mysqli_num_rows($DBQueryObj->getQueryResult()) > 0) {
+            $result = $DBQueryObj->getQueryResult();
+            if ($result !== false && mysqli_num_rows($result) > 0) {
                 /*                 * TODO: Original return rows count * */
-                $TotalRowsPerSQL = mysqli_num_rows($DBQueryObj->getQueryResult());
+                $TotalRowsPerSQL = mysqli_num_rows($result);
 
                 /*                 * TODO: Experimental faster return rows count * */
                 //$scalar=mysqli_fetch_assoc($DBQueryObj->getQueryResult());
@@ -319,7 +323,8 @@ abstract class UniversalPaging implements IPagingType
 
         $rowCounter = $startRow + 1;
 
-        if (mysqli_num_rows($DBQueryObj->getQueryResult()) > 0) {
+        $renderResult = $DBQueryObj->getQueryResult();
+        if ($renderResult !== false && mysqli_num_rows($renderResult) > 0) {
             $this->performTaskOnEachPage($DBQueryObj, $startRow, $endRow);
             unset($DBQueryObj);
         } else {
@@ -392,7 +397,8 @@ abstract class UniversalPaging implements IPagingType
 
         $DBQueryObj->runSQL_Query();
 
-        $rowCnt = mysqli_num_rows($DBQueryObj->getQueryResult());
+        $rowCntResult = $DBQueryObj->getQueryResult();
+        $rowCnt = ($rowCntResult !== false) ? mysqli_num_rows($rowCntResult) : 0;
 
         if ($rowCnt > 0) {
             $this->performTaskOnEachPage($DBQueryObj, $startRow, $endRow);
