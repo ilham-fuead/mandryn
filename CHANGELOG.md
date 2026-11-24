@@ -10,7 +10,23 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+### Added
+
+- New MCP stdio server (`bin/mandryn-mcp`, namespace `Mandryn\Mcp`) exposing
+  `mandryn_query`, `mandryn_page`, `mandryn_schema`, and `mandryn_fetch` as
+  tools for AI agents. Read-only by default; write statements require
+  `--allow-writes`. `mandryn_page` reuses `UniversalPaging` MANUAL mode.
+  Documented in `docs/MCP.md`; the DB-free test discipline is preserved via a
+  `DbConnection` seam.
+
 ### Changed
+
+- Added parameter, return, and property type declarations across the modern
+  `Mandryn\db` and `Mandryn\http` layers (`Query`, `DBQueryi`, `HttpUrl`,
+  `ConcurrentRequest`). This tightens the public API: callers that passed values
+  of unexpected types (for example `null` or a non-string where a string was
+  expected) now receive a `TypeError` instead of silent coercion. The legacy
+  `src/mandryn_v1` layer is untouched.
 
 - Widen the Guzzle constraint to `^7.8 || ^8.0` and resolve to Guzzle 8.6.0.
   `ConcurrentRequest` was exercised against Guzzle 8 with a local server to
@@ -27,6 +43,14 @@ per-commit history is available via `git log`.
 - Added `.github/dependabot.yml`: weekly Composer updates with patch and minor
   bumps grouped into one pull request, plus monthly GitHub Actions updates,
   replacing the previous untuned defaults.
+
+### Fixed
+
+- `Mandryn\db\DBQueryi::execute()` caught `PDOException` without a leading
+  backslash, which resolved to the non-existent `Mandryn\db\PDOException`, so
+  PDO failures were never caught and surfaced as fatal errors. The catch now
+  targets `\PDOException`, so execution failures are reported and `execute()`
+  returns `null` instead of crashing.
 
 ## [5.0.0] - 2026-11-24
 
