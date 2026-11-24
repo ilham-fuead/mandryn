@@ -14,16 +14,16 @@
 ## Installation
 
 ```bash
-composer require mandryn/mandryn:^5.0
+composer require mandryn/mandryn:^6.0
 ```
 
 ## What's inside
 
 | Namespace | Classes | Purpose |
 |---|---|---|
-| `Mandryn\db` | `Query`, `DBQueryi` | SQL string building and low-level mysqli access |
+| `Mandryn\db` | `Query`, `DBQueryi`, `MagicObject` | SQL string building, PDO-backed executor (prepared statements), dynamic row object |
 | `Mandryn\db\constant` | `QueryType`, `SqlStringType`, `DataType`, `ConditionType`, `AppenderOperator`, `EngineType` | Type-safe constants for the query builders |
-| `Mandryn\http` | `ConcurrentRequest`, `HttpUrl` | Parallel HTTP requests and URL helpers |
+| `Mandryn\http` | `ConcurrentRequest`, `HttpUrl`, `MagicInput` | Parallel HTTP requests, URL helpers, decoupled input validator |
 | `Mandryn\Mcp` | `Server`, `ToolRegistry`, `SqlGuard`, `Tools\*`, `Connection\*` | MCP stdio server exposing DB/paging/fetch as agent tools |
 | *(global)* | `DBQuery`, `DBCommand`, `SQLQuery`, `DBQueryEZ`, `SQLQueryES` | Older-generation database convenience wrappers |
 | *(global)* | `UniversalPaging`, `PagingInfo`, `IPagingType`, `Pagination`, `Sorting`, `Searching` | Recordset paging and list controls |
@@ -39,10 +39,6 @@ Classes under `src/mandryn_v1/` are autoloaded into the **global namespace** (th
 
 ```php
 require __DIR__ . '/vendor/autoload.php';
-
-use Mandryn\db\DBQuery;
-use Mandryn\mandryn_v1\UniversalPaging;
-use Mandryn\mandryn_v1\IPagingType;
 
 class UserPager extends UniversalPaging
 {

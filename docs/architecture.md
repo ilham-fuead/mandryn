@@ -14,7 +14,7 @@ paging behaviour in depth; `docs/MCP.md` documents the MCP tool layer.
 | `constant/SqlStringType` | `SQL_STRING` (1) and `PREPARE_STATEMENT` (2). |
 | `constant/DataType` | Integer constants: `NULL`(0), `INT`(1), `STR`(2), `LOB`(3). |
 | `constant/ConditionType` | String operators: `=`, `!=`, `>`, `>=`, `<`, `<=`, `IS NULL`, `IS NOT NULL`, ` LIKE `. |
-| `constant/AppenderOperator` | `NONE`, `AND`, `OR`. |
+| `constant/AppenderOperator` | `NONE_OPR`, `AND_OPR`, `OR_OPR`. |
 | `constant/EngineType` | MySQL storage engines (`MyISAM`, `InnoDB`, …). |
 
 ## HTTP layer — `Mandryn\http\` (`src/http/`)
