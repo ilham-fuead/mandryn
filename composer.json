@@ -2,6 +2,15 @@
     "name": "mandryn/mandryn",
     "description": "Mandryn Component Library",
     "type": "library",
+    "keywords": [
+        "pagination",
+        "paging",
+        "database",
+        "mysqli",
+        "query-builder",
+        "form-validation",
+        "php-library"
+    ],
     "license": "MIT",
     "authors": [
         {
@@ -19,7 +28,7 @@
             "name": "Maruwan Adisendja",
             "email": "adisenju@yahoo.com",
             "role": "Software Engineer"
-        },               
+        },
         {
             "name": "Kemas Mulya Kanigoro",
             "email": "cyberogo@gmail.com",
@@ -29,7 +38,7 @@
             "name": "Rawuf Abdel Rahman",
             "email": "codeart.aes@gmail.com",
             "role": "Developer"
-        }, 
+        },
         {
             "name": "Mohd Fadil Bin Md Sari",
             "email": "mdfadilmd@gmail.com",
@@ -43,7 +52,9 @@
     ],
     "minimum-stability": "dev",
     "support": {
-        "email": "ilham.fuead@gmail.com"
+        "email": "ilham.fuead@gmail.com",
+        "issues": "https://github.com/ilham-fuead/mandryn/issues",
+        "source": "https://github.com/ilham-fuead/mandryn"
     },
     "require": {
         "php": ">=8.3.6",
@@ -58,8 +69,21 @@
         "psr-4": {
             "Mandryn\\db\\": "src/db/",
             "Mandryn\\db\\constant\\": "src/db/constant/",
-            "Mandryn\\http\\": "src/http/",
-            "": "src/mandryn_v1/"
+            "Mandryn\\http\\": "src/http/"
+        },
+        "classmap": [
+            "src/mandryn_v1/"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
     }
 }

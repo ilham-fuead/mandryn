@@ -1,0 +1,35 @@
+# Normalize every text file to LF in the repository, regardless of the
+# contributor's core.autocrlf setting. Keeps the Composer dist archive
+# byte-identical across platforms.
+* text=auto
+
+# Explicit hints: better GitHub diffs and accurate linguist statistics.
+*.php    text diff=php
+*.md     text diff=markdown
+*.json   text
+*.lock   text
+*.xml    text
+*.yml    text
+*.yaml   text
+*.html   text
+*.vue    text
+
+# Binary assets: never convert, never diff.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.wav    binary
+*.mp3    binary
+*.zip    binary
+
+# Keep the Composer dist archive lean: development-only paths are excluded
+# when someone runs `composer require mandryn/mandryn`.
+/.github/          export-ignore
+/.editorconfig     export-ignore
+/.gitattributes    export-ignore
+/phpunit.xml.dist  export-ignore
+/tests/            export-ignore
+/examples/         export-ignore

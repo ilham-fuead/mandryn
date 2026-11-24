@@ -1,7 +1,41 @@
-/testing/
-/test/
-/nbproject/
-/settings/
+# Composer
 /vendor/
-/config/
+/composer.phar
+/auth.json
+
+# PHPUnit
+/phpunit.xml
+/.phpunit.cache/
+.phpunit.result.cache
+
+# Static analysis / style tooling caches
+.php-cs-fixer.cache
+.php-cs-fixer.php
+.phplint.cache
+/phpstan.neon
+/psalm.xml
+
+# Logs and local runtime artefacts
+*.log
+*.wav
+*.mp3
+
+# IDE and editors
 /.idea/
+/.vscode/
+/nbproject/
+*.sublime-project
+*.sublime-workspace
+
+# Operating system noise
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Local overrides
+/config/
+/settings/
+/test/
+/testing/

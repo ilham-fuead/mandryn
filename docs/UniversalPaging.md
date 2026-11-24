@@ -43,7 +43,7 @@ abstract protected function handleTaskOnNoPaging(): void;
 | `setUseTmpMemEng(bool $use=true)` | Enable in-memory MEMORY-engine temp table. |
 | `setPageProperty(PagingInfo $obj)` | (MANUAL mode) inject totalRow/totalPage/memTableName. |
 | `setPagingDelay(int $seconds=0)` | Delay between pages (auto mode). |
-| `getPagingInfo(): PagingInfo` | Triggers init (auto mode) and returns info. |
+| `getPagingInfo(): PagingInfo` | Returns info, initialising first unless `setPageProperty()` supplied the totals. |
 | `getPagingInfoObj(): PagingInfo` | Returns info without init. |
 | `startPaging(int $currentPage)` | Drives rendering. |
 | `getLastPageStatus(): int` | 1 when last page reached (blind mode). |
@@ -106,9 +106,8 @@ $pager->startPaging($page);
 
 - **AUTO_VIRTUAL**: runs `COUNT`-equivalent via `mysqli_num_rows` on full result, computes pages, then recursively renders each page with `LIMIT start,n`. Delays between pages via `sleep`/`usleep`.
 - **MANUAL**: renders a single page from `$currentPage`; no counting. Caller manages totals.
-- **Blind mode** (`useBlindMode=true` in `setPagingProperty`): skips counting, pages until an empty result (cap `BLIND_MAX_PAGES = 100`).
+- **Blind mode** (`useBlindMode=true` in `setPagingProperty`): skips counting entirely and pages until an empty result, with no upfront row count (cap `BLIND_MAX_PAGES = 100`). Intended pairing is `MANUAL` — one page per request — though `AUTO_VIRTUAL` also accepts it.
 - **Memory table** (`useMemTable=true` or `setUseTmpMemEng(true)`): AUTO_VIRTUAL mode only. Builds a `MEMORY`-engine temp table from your SQL for faster re-reads. Requires `CREATE TABLE` + `SET GLOBAL` privileges.
-- **Blind mode** (`useBlindMode=true`): can pair with MANUAL mode. Pages until an empty result; no upfront row count. Cap `BLIND_MAX_PAGES = 100`.
 
 ## SQA notes
 
@@ -117,6 +116,8 @@ $pager->startPaging($page);
 - `executeTableLevelCommand()` returns `bool` instead of throwing.
 - Memory-table name uses `random_bytes(4)` (no `rand()` collision).
 - `initPageProperty()` is idempotent (no double DB round-trip).
+- Once `setPageProperty()` has supplied totals, `getPagingInfo()` returns them
+  verbatim and never recounts — the caller's numbers stay authoritative.
 - No debug `echo` in production paths.
 
 ## Caveats

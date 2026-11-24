@@ -74,7 +74,9 @@ abstract class UniversalPaging implements IPagingType
 
     public function getPagingInfo()
     {
-        $this->initPageProperty();
+        if (!$this->pagePropertyInitialized) {
+            $this->initPageProperty();
+        }
         return $this->pagingInfoObj;
     }
 
@@ -111,7 +113,7 @@ abstract class UniversalPaging implements IPagingType
         $this->pagingInfoObj->totalRowPerPaging = $noOfRowsPerPage;
     }
 
-    private function initPageProperty()
+    protected function initPageProperty()
     {
         if ($this->pagePropertyInitialized) {
             return;
@@ -247,6 +249,11 @@ abstract class UniversalPaging implements IPagingType
             $this->pagingInfoObj->memTableName = $obj->memTableName;
             $this->sqlStatement = "SELECT * FROM {$obj->memTableName}";
         }
+
+        // Totals are caller supplied, so page initialisation is already fully
+        // described. Without this guard a later getPagingInfo() call would run
+        // initPageProperty() and execute an expensive full-result count.
+        $this->pagePropertyInitialized = true;
     }
 
     public function startPaging($setCurrentPage)
