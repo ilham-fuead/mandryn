@@ -33,6 +33,12 @@ final class Server
 
         while (($line = fgets($input)) !== false) {
             $line = trim($line);
+            // Some pipes/clients prepend a UTF-8 BOM (PowerShell's stdin pipe
+            // can even send it twice); strip defensively.
+            while (str_starts_with($line, "\xEF\xBB\xBF")) {
+                $line = substr($line, 3);
+            }
+            $line = trim($line);
             if ($line === '') {
                 continue;
             }
@@ -67,13 +73,13 @@ final class Server
             case 'initialize':
                 $this->writeResult($id, [
                     'protocolVersion' => '2024-11-05',
-                    'capabilities' => ['tools' => []],
+                    'capabilities' => ['tools' => new \stdClass()],
                     'serverInfo' => ['name' => $this->name, 'version' => $this->version],
                 ]);
                 return;
 
             case 'ping':
-                $this->writeResult($id, []);
+                $this->writeResult($id, new \stdClass());
                 return;
 
             case 'tools/list':
@@ -154,9 +160,9 @@ final class Server
 
     /**
      * @param mixed $id
-     * @param array<string, mixed> $result
+     * @param mixed $result
      */
-    private function writeResult(mixed $id, array $result): void
+    private function writeResult(mixed $id, mixed $result): void
     {
         $this->write(['jsonrpc' => '2.0', 'id' => $id, 'result' => $result]);
     }

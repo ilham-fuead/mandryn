@@ -1,0 +1,110 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * mandryn-mcp — MCP stdio server exposing Mandryn's DB, paging and HTTP
+ * capabilities as tools.
+ *
+ * Usage:
+ *   php bin/mandryn-mcp [--allow-writes] [--config <file.json>]
+ *
+ * DB credentials come from MANDYRN_DB_HOST / MANDYRN_DB_PORT / MANDYRN_DB_USER
+ * / MANDYRN_DB_PASS / MANDYRN_DB_NAME, or from the JSON config file
+ * {"host": ..., "port": ..., "user": ..., "pass": ..., "name": ...}.
+ *
+ * stdout is reserved for the MCP protocol; nothing else may write to it.
+ */
+
+if (isset($GLOBALS['_composer_autoload_path'])) {
+    require $GLOBALS['_composer_autoload_path'];
+} else {
+    $autoload = dirname(__DIR__) . '/vendor/autoload.php';
+    if (!is_file($autoload)) {
+        fwrite(STDERR, "mandryn-mcp: vendor/autoload.php not found. Run 'composer install' first.\n");
+        exit(1);
+    }
+    require $autoload;
+}
+
+use Mandryn\Mcp\Connection\DbConfig;
+use Mandryn\Mcp\Connection\DbConnection;
+use Mandryn\Mcp\Connection\MysqliDbConnection;
+use Mandryn\Mcp\Connection\UnconfiguredDbConnection;
+use Mandryn\Mcp\Server;
+use Mandryn\Mcp\SqlGuard;
+use Mandryn\Mcp\ToolRegistry;
+use Mandryn\Mcp\Tools\FetchTool;
+use Mandryn\Mcp\Tools\PageTool;
+use Mandryn\Mcp\Tools\QueryTool;
+use Mandryn\Mcp\Tools\SchemaTool;
+
+$allowWrites = in_array('--allow-writes', $argv, true);
+
+$configPath = null;
+foreach ($argv as $index => $arg) {
+    if ($arg === '--config') {
+        $configPath = $argv[$index + 1] ?? null;
+    }
+}
+
+$connection = buildConnection($configPath);
+
+$guard = new SqlGuard($allowWrites);
+$tools = [
+    new QueryTool($connection, $guard),
+    new SchemaTool($connection),
+    new PageTool($connection),
+    new FetchTool(),
+];
+
+$server = new Server(new ToolRegistry($tools), 'mandryn', '0.1.0');
+$server->run();
+
+/**
+ * Read DB configuration from env vars, overlaid by the optional JSON config file.
+ */
+function buildConnection(?string $configPath): DbConnection
+{
+    $values = [
+        'host' => getenv('MANDYRN_DB_HOST') ?: null,
+        'port' => getenv('MANDYRN_DB_PORT') ?: null,
+        'user' => getenv('MANDYRN_DB_USER') ?: null,
+        'pass' => getenv('MANDYRN_DB_PASS') ?: null,
+        'name' => getenv('MANDYRN_DB_NAME') ?: null,
+    ];
+
+    if ($configPath !== null) {
+        if (!is_file($configPath)) {
+            fwrite(STDERR, "mandryn-mcp: config file not found: {$configPath}\n");
+            exit(2);
+        }
+
+        $json = json_decode((string) file_get_contents($configPath), true);
+        if (!is_array($json)) {
+            fwrite(STDERR, "mandryn-mcp: config file is not valid JSON: {$configPath}\n");
+            exit(2);
+        }
+
+        foreach (['host', 'port', 'user', 'pass', 'name'] as $key) {
+            if (isset($json[$key]) && $json[$key] !== '' && $json[$key] !== null) {
+                $values[$key] = $json[$key];
+            }
+        }
+    }
+
+    if ($values['host'] === null || $values['host'] === '' || $values['name'] === null || $values['name'] === '') {
+        return new UnconfiguredDbConnection();
+    }
+
+    $port = $values['port'] !== null ? (int) $values['port'] : 3306;
+
+    return new MysqliDbConnection(new DbConfig(
+        (string) $values['host'],
+        $port,
+        (string) ($values['user'] ?? ''),
+        (string) ($values['pass'] ?? ''),
+        (string) $values['name'],
+    ));
+}
