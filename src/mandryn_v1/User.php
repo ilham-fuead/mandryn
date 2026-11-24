@@ -1,45 +1,8 @@
 <?php
 include_once 'SQLQuery.php';
 
-if (!interface_exists('IRedirectType')) {
-interface IRedirectType {
-    const AFTER_LOGIN_TYPE="in";
-    const AFTER_LOGOUT_TYPE="out";
-    const MISSING_SESSION_TYPE="lost";
-    const RESTRICT_ACCESS_TYPE="restrict";
-    const RESTRICT_RIGHT_ACCESS_TYPE="noRight";
-    const DEVELOPMENT_MODE="debug";
-}
+include_once __DIR__ . '/Login.php';
 
-interface ISecurityLevel {
-    CONST SESSION_ROLE_RIGHT=1; //highest level
-    CONST SESSION_AND_ROLE=2;
-    CONST SESSION_ONLY=3;
-    CONST DEVELOPMENT_NO_SECURITY=4;
-}
-
-interface IRightLevel{
-    CONST ADM_LVL_1=0;
-    CONST ADM_LVL_2=1;
-    CONST ADM_LVL_3=2;
-    CONST USR_ODR=3;
-}
-
-interface IActionType {
-    CONST STOP_APP=1;
-    CONST GET_CLEARANCE_STATUS=2;
-    CONST REDIRECT_NO_RIGHT=3;
-}
-
-interface IRedirectCode{
-    CONST SUCCESS_LOGIN=600;
-    CONST FAILED_LOGIN=610;
-    CONST SUCCESS_LOGOUT=621;
-    CONST INVALID_SESSION=630;
-    CONST INVALID_MODULE_ROLE=640;
-    CONST INVALID_MODULE_RIGHT=650;
-}
-}
 abstract class User {
 
     /**

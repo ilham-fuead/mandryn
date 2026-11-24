@@ -47,6 +47,11 @@ use `PREPARE_STATEMENT` mode, are unaffected.
 
 ### Fixed
 
+- Removed the duplicated authentication interface declarations (`IRedirectType`,
+  `ISecurityLevel`, `IRightLevel`, `IActionType`, `IRedirectCode`) from
+  `User.php`. `Login.php` is now the single declaration site, which clears the
+  "Ambiguous class resolution" warning Composer printed on every autoload
+  rebuild.
 - The query builder no longer appends a dangling `WHERE` when a query has no
   conditions.
 - `setSelectField()` accepts several field arguments again; a `$num`/`$nums` typo
