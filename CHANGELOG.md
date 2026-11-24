@@ -10,6 +10,15 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+## [6.0.1] - 2026-11-24
+
+### Fixed
+
+- The `composer analyse` script chained two PHPStan runs with `&&`, which
+  broke on CI (`sh: @php: not found`) because Composer only substitutes `@php`
+  at the start of a command. It now uses Composer's array form so each PHPStan
+  run resolves `@php` correctly and the `static-analysis` job passes.
+
 ## [6.0.0] - 2026-11-24
 
 ### Added
