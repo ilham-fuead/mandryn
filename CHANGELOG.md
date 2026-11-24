@@ -10,6 +10,8 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-11-24
+
 ### Added
 
 - New MCP stdio server (`bin/mandryn-mcp`, namespace `Mandryn\Mcp`) exposing
