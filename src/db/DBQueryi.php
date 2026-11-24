@@ -143,6 +143,24 @@ class DBQueryi {
         }
     }
 
+    /**
+     * Execute the prepared statement and yield each row as a MagicObject.
+     *
+     * @param array<string, string> $columnMap old column name => new property name
+     * @return \Generator<int, \Mandryn\db\MagicObject>
+     */
+    public function getCustomSqlObjects(array $columnMap = []): \Generator
+    {
+        if ($this->statementObj === null) {
+            throw new \RuntimeException('Cannot fetch objects: no prepared statement.');
+        }
+
+        $this->statementObj->execute();
+        while (($row = $this->statementObj->fetch(\PDO::FETCH_ASSOC)) !== false) {
+            yield MagicObject::fromRow($row, $columnMap);
+        }
+    }
+
     public function getCustomSqlRecordset(): \Generator {
         if ($this->statementObj === null) {
             throw new \RuntimeException('Cannot fetch recordset: no prepared statement.');

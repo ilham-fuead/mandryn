@@ -32,7 +32,7 @@ class MagicObject {
     }
 
     public function __isset($name) {
-        return isset($name);
+        return array_key_exists($name, $this->property);
     }
 
     /**
