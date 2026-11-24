@@ -12,6 +12,13 @@ per-commit history is available via `git log`.
 
 ### Changed
 
+- Widen the Guzzle constraint to `^7.8 || ^8.0` and resolve to Guzzle 8.6.0.
+  `ConcurrentRequest` was exercised against Guzzle 8 with a local server to
+  confirm the `Pool` path, concurrent fulfilment and query-string building all
+  behave as before; existing consumers on Guzzle 7 are unaffected.
+- README install instruction corrected to `mandryn/mandryn:^5.0`; the previous
+  `dev-master` example no longer resolves now that the package requires stable
+  releases.
 - Dependency resolution is pinned to `minimum-stability: stable` with
   `prefer-stable: true`, replacing `dev`. Builds now install released versions
   instead of dev branches; the lock file has been regenerated

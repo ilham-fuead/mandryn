@@ -14,7 +14,7 @@
 ## Installation
 
 ```bash
-composer require mandryn/mandryn dev-master
+composer require mandryn/mandryn:^5.0
 ```
 
 ## What's inside
