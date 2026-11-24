@@ -50,7 +50,8 @@
             "role": "Developer"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
     "support": {
         "email": "ilham.fuead@gmail.com",
         "issues": "https://github.com/ilham-fuead/mandryn/issues",

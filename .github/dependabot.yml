@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  # Composer dependencies. Patch and minor bumps are grouped into one pull
+  # request so the queue stays short and a single CI run covers them. Majors
+  # stay individual so they can be reviewed properly.
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+      include: scope
+    groups:
+      composer-patch-and-minor:
+        update-types:
+          - minor
+          - patch
+
+  # Workflow actions (actions/checkout, setup-php, and so on).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci

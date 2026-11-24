@@ -10,6 +10,17 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+### Changed
+
+- Dependency resolution is pinned to `minimum-stability: stable` with
+  `prefer-stable: true`, replacing `dev`. Builds now install released versions
+  instead of dev branches; the lock file has been regenerated
+  (`guzzlehttp/guzzle` 7.17.0, `symfony/process` 6.4.49,
+  `phpunit/phpunit` 10.5.67).
+- Added `.github/dependabot.yml`: weekly Composer updates with patch and minor
+  bumps grouped into one pull request, plus monthly GitHub Actions updates,
+  replacing the previous untuned defaults.
+
 ## [5.0.0] - 2026-11-24
 
 The behaviour changes in this release are breaking because the previous
