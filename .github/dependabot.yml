@@ -12,7 +12,6 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: deps
-      include: scope
     groups:
       composer-patch-and-minor:
         update-types:
