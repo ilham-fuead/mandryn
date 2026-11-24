@@ -9,6 +9,7 @@ paging behaviour in depth; `docs/MCP.md` documents the MCP tool layer.
 |---|---|
 | `Query` | SQL string builder for CREATE/SELECT/INSERT/UPDATE/DELETE. Emits `SQL_STRING` (escaped) or `PREPARE_STATEMENT` (named placeholders) forms. Guards against unscoped writes and unescaped values. |
 | `DBQueryi` | PDO-based executor for `Query`. Note: hardcodes port 3306 and prints PDO errors to stdout — do not use where stdout is a protocol channel. |
+| `MagicObject` | Lightweight dynamic object: on-the-fly properties, row hydration (`fromArray`/`fromRow`), column-name mapping, JSON serialisation. Pairs with `DBQueryi::getCustomSqlObjects()` and `Query`. |
 | `constant/QueryType` | String constants: `CREATE`, `SELECT`, `INSERT`, `UPDATE`, `DELETE`. |
 | `constant/SqlStringType` | `SQL_STRING` (1) and `PREPARE_STATEMENT` (2). |
 | `constant/DataType` | Integer constants: `NULL`(0), `INT`(1), `STR`(2), `LOB`(3). |
@@ -21,6 +22,7 @@ paging behaviour in depth; `docs/MCP.md` documents the MCP tool layer.
 | Class | Role |
 |---|---|
 | `HttpUrl` | URL plus query-parameter array, with status/data slots used by `ConcurrentRequest`. |
+| `MagicInput` | Modern, decoupled input validator: validates GET/POST/JSON/header inputs against a definition, removes undefined keys. Extends `MagicObject`. |
 | `ConcurrentRequest` | Guzzle `Pool` wrapper for parallel GET requests. Exposes neither status codes nor timeouts, so it is a library feature rather than the basis of the MCP fetch tool. |
 
 ## MCP layer — `Mandryn\Mcp\` (`src/mcp/`)
