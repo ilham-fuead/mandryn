@@ -10,6 +10,27 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+## [6.0.2] - 2026-11-24
+
+### Added
+
+- Modern namespaced `Mandryn\db\MagicObject` (typed, bug-fixed, row hydration
+  via `fromArray`/`fromRow`, column-name mapping, JSON serialisation) and
+  `Mandryn\http\MagicInput` (decoupled, validation-only input validator
+  extending `MagicObject`). `DBQueryi` gains `getCustomSqlObjects()` for
+  prepared-statement row hydration. The legacy `MagicObject::__isset` bug
+  (`isset($name)` instead of `array_key_exists`) is fixed in place.
+
+### Changed
+
+- Dropped the unused `symfony/process` dependency (zero references in `src/`),
+  shrinking the install footprint.
+
+### Fixed
+
+- `DBQueryi::execute()` now catches `\PDOException` instead of the
+  non-existent `Mandryn\db\PDOException`.
+
 ## [6.0.1] - 2026-11-24
 
 ### Fixed
