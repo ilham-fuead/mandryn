@@ -43,11 +43,12 @@ final class UniversalPagingIntegrationTest extends TestCase
             self::assertSame(7, $page1['total']);
             self::assertSame(3, $page1['total_pages']);
             self::assertCount(3, $page1['rows']);
-            self::assertSame(1, $page1['rows'][0]['id']);
+            // UniversalPaging uses a non-prepared mysqli result, so values come back as strings.
+            self::assertSame('1', $page1['rows'][0]['id']);
 
             $page3 = $tool->call(['sql' => 'SELECT id, label FROM mandryn_mcp_test ORDER BY id', 'page' => 3, 'page_size' => 3]);
             self::assertCount(1, $page3['rows']);
-            self::assertSame(7, $page3['rows'][0]['id']);
+            self::assertSame('7', $page3['rows'][0]['id']);
 
             $beyond = $tool->call(['sql' => 'SELECT id, label FROM mandryn_mcp_test ORDER BY id', 'page' => 99, 'page_size' => 3]);
             self::assertSame(3, $beyond['page']);
