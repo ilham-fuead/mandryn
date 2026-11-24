@@ -13,6 +13,8 @@
 .php-cs-fixer.php
 .phplint.cache
 /phpstan.neon
+/phpstan-baseline.neon
+/.phpstan-cache/
 /psalm.xml
 
 # Logs and local runtime artefacts

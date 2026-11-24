@@ -4,30 +4,52 @@ namespace Mandryn\db;
 
 class DBQueryi {
 
-    private $pdoObj;
-    private $statementObj;
-    private $preparedQueryObj;
-    private $paramFields;
-    public $affectedRow;
-    
-    public function __construct($host, $username, $password, $database_name) {
+    private ?\PDO $pdoObj = null;
+    private ?\PDOStatement $statementObj = null;
+    private ?Query $preparedQueryObj = null;
+    /** @var array<string, mixed> */
+    private array $paramFields = [];
+    public int $affectedRow = 0;
+
+    public function __construct(string $host, string $username, string $password, string $database_name) {
         $dsn = "mysql:host={$host};dbname={$database_name};port=3306;charset=utf8";
         $this->pdoObj = new \PDO($dsn, $username, $password);
         $this->pdoObj->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $this->affectedRow=0;
     }
 
-    public function setQuery(\Mandryn\db\Query $preparedQueryObj) {
+    public function setQuery(\Mandryn\db\Query $preparedQueryObj): void {
         $this->preparedQueryObj = $preparedQueryObj;
         $this->initStatement();
         $this->bindParameters();
     }
 
-    private function initStatement() {
-        $this->statementObj = $this->pdoObj->prepare($this->preparedQueryObj->getQueryString(\Mandryn\db\constant\SqlStringType::PREPARE_STATEMENT));
+    private function initStatement(): void {
+        if ($this->pdoObj === null) {
+            throw new \RuntimeException('Cannot prepare statement: PDO connection is closed.');
+        }
+        if ($this->preparedQueryObj === null) {
+            throw new \RuntimeException('Cannot prepare statement: no query was set.');
+        }
+
+        $statement = $this->pdoObj->prepare(
+            $this->preparedQueryObj->getQueryString(\Mandryn\db\constant\SqlStringType::PREPARE_STATEMENT)
+        );
+
+        if ($statement === false) {
+            throw new \RuntimeException('Failed to prepare statement.');
+        }
+
+        $this->statementObj = $statement;
     }
 
-    private function bindParameters() {
+    private function bindParameters(): void {
+        if ($this->statementObj === null) {
+            throw new \RuntimeException('Cannot bind parameters: no prepared statement.');
+        }
+        if ($this->preparedQueryObj === null) {
+            throw new \RuntimeException('Cannot bind parameters: no query was set.');
+        }
+
         $this->paramFields = [];
 
         if ($this->preparedQueryObj->queryType === \Mandryn\db\constant\QueryType::UPDATE) {
@@ -59,21 +81,25 @@ class DBQueryi {
         }
     }
 
-    public function setFieldValue($fieldName, $fieldValue) {
+    public function setFieldValue(string $fieldName, mixed $fieldValue): void {
         if (array_key_exists($fieldName, $this->paramFields)) {
             $this->paramFields[$fieldName] = $fieldValue;
         }
     }
 
-    public function execute() {
+    public function execute(): ?bool {
         try {
+            if ($this->statementObj === null) {
+                throw new \RuntimeException('Cannot execute: no prepared statement.');
+            }
             return $this->statementObj->execute();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             print $e->getMessage();
+            return null;
         }
     }
 
-    public function closeConnection() {
+    public function closeConnection(): void {
         $this->pdoObj = null;
     }
 
@@ -81,33 +107,61 @@ class DBQueryi {
         $this->pdoObj = null;
     }
 
-    public function setCustomSql($sqlWithPlaceholder, $placeholderNamesValues) {
-        $this->statementObj = $this->pdoObj->prepare($sqlWithPlaceholder);
-        
-        if(is_array($placeholderNamesValues)){
+    /**
+     * @param array<string, mixed>|null $placeholderNamesValues
+     */
+    public function setCustomSql(string $sqlWithPlaceholder, ?array $placeholderNamesValues = null): void {
+        if ($this->pdoObj === null) {
+            throw new \RuntimeException('Cannot prepare statement: PDO connection is closed.');
+        }
+
+        $statement = $this->pdoObj->prepare($sqlWithPlaceholder);
+
+        if ($statement === false) {
+            throw new \RuntimeException('Failed to prepare statement.');
+        }
+
+        $this->statementObj = $statement;
+
+        if (is_array($placeholderNamesValues)) {
             $this->bindPlaceholderByArray($placeholderNamesValues);
-        }        
+        }
     }
-    
-    private function bindPlaceholderByArray($array){
-        $this->paramFields=[];
+
+    /**
+     * @param array<string, mixed> $array
+     */
+    private function bindPlaceholderByArray(array $array): void {
+        if ($this->statementObj === null) {
+            throw new \RuntimeException('Cannot bind parameters: no prepared statement.');
+        }
+
+        $this->paramFields = [];
         foreach ($array as $placeholder => $value) {
             $this->paramFields[$placeholder] = $value;
             $this->statementObj->bindParam($placeholder, $this->paramFields[$placeholder]);
         }
     }
 
-    public function getCustomSqlRecordset() {
+    public function getCustomSqlRecordset(): \Generator {
+        if ($this->statementObj === null) {
+            throw new \RuntimeException('Cannot fetch recordset: no prepared statement.');
+        }
+
         $this->statementObj->execute();
         while (($row = $this->statementObj->fetch(\PDO::FETCH_ASSOC)) !== false) {
             yield $row;
         }
     }
 
-    public function executeCustomSqlCommand() {
-        $this->affectedRow=0;
-        $status=$this->statementObj->execute();
-        $this->affectedRow=$this->statementObj->rowCount();
+    public function executeCustomSqlCommand(): bool {
+        if ($this->statementObj === null) {
+            throw new \RuntimeException('Cannot execute: no prepared statement.');
+        }
+
+        $this->affectedRow = 0;
+        $status = $this->statementObj->execute();
+        $this->affectedRow = $this->statementObj->rowCount();
         return $status;
     }
 }
