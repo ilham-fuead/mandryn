@@ -101,7 +101,7 @@ back as `{ "content": [ { "type": "text", "text": "<json>" } ] }`.
 | `mandryn_schema` | `{}` | tables + columns (SHOW TABLES + information_schema.COLUMNS) | always |
 | `mandryn_query` | `sql`, `params[]`, `limit?` | rows (prepared statement) | SELECT/SHOW/DESCRIBE/EXPLAIN only unless `--allow-writes` |
 | `mandryn_page` | `sql`, `params[]`, `page`, `page_size` | page rows + totals (UniversalPaging MANUAL mode) | SELECT only, always |
-| `mandryn_fetch` | `url`, `params{}` | status, capped body (ConcurrentRequest GET) | n/a (HTTP) |
+| `mandryn_fetch` | `url`, `params{}` | status, capped body (Mandryn `HttpUrl` + Guzzle client with timeout; `ConcurrentRequest` exposes neither status codes nor timeouts, so it stays a library feature for batch use) | n/a (HTTP) |
 
 ### 2.4 Safety model
 
@@ -137,7 +137,9 @@ back as `{ "content": [ { "type": "text", "text": "<json>" } ] }`.
    3306** — stdout corruption would break the JSON-RPC stream. Mitigation:
    the MCP layer uses its own `MysqliDbConnection` (consistent with the
    library's mysqli orientation) instead of `DBQueryi`. `mandryn_fetch`
-   uses `ConcurrentRequest`, which has no such output side effects.
+   builds URLs with Mandryn `HttpUrl` and performs the request with a
+   dedicated Guzzle client (timeout + status code + body cap); it does not
+   use `ConcurrentRequest`, which exposes neither status codes nor timeouts.
 
 ### 2.6 Testing
 
