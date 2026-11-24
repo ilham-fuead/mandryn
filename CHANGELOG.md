@@ -10,6 +10,15 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+## [6.0.3] - 2026-11-24
+
+### Fixed
+
+- `Mandryn\http\MagicInput::toArray()` no longer infinitely recurses when an
+  input definition is set (`isInputsComplied()` -> `applyInputDefinition()` was
+  calling back into `toArray()`). Validation now reads the raw property array
+  via `parent::toArray()`.
+
 ## [6.0.2] - 2026-11-24
 
 ### Added

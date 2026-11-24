@@ -83,7 +83,7 @@ class MagicInput extends MagicObject
     public function applyInputDefinition(): self
     {
         $this->nonCompliedInputList = [];
-        $data = $this->toArray();
+        $data = parent::toArray();
 
         foreach ($this->inputDefinition as $def) {
             $name = $def['name'];
