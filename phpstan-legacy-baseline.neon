@@ -1,0 +1,13 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property Radio\:\:\$disabled\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/mandryn_v1/Radio.php
+
+		-
+			message: '#^Method Utilities\:\:getDatetime\(\) should return string but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: src/mandryn_v1/Utilities.php

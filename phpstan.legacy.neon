@@ -1,0 +1,8 @@
+includes:
+    - phpstan-legacy-baseline.neon
+
+parameters:
+    level: 0
+    paths:
+        - src/mandryn_v1
+    tmpDir: .phpstan-cache

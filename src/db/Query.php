@@ -4,19 +4,24 @@ namespace Mandryn\db;
 
 class Query {
 
-    public $queryType;
-    public $tableName;
-    private $tableEngineType;
-    private $tableStructureSQL;
-    public $selectFields;
-    public $insertFields;
-    public $updateFields;
-    public $conditionFields;
-    private $sqlStringType;
+    public string $queryType;
+    public ?string $tableName = null;
+    private ?string $tableEngineType = null;
+    private ?string $tableStructureSQL = null;
+    /** @var array<int, string> */
+    public array $selectFields;
+    /** @var array<int, array{0: string, 1: mixed, 2: int}> */
+    public array $insertFields;
+    /** @var array<int, array{0: string, 1: mixed, 2: int}> */
+    public array $updateFields;
+    /** @var array<int, array{0: string, 1: string, 2: mixed, 3: int, 4: string}> */
+    public array $conditionFields;
+    private ?int $sqlStringType = null;
+    /** @var callable|null */
     private $valueEscaper = null;
-    private $allowUnscopedWrite = false;
+    private bool $allowUnscopedWrite = false;
 
-    public function __construct($QueryType) {
+    public function __construct(string $QueryType) {
         $this->queryType = $QueryType;
         $this->selectFields = [];
         $this->insertFields = [];
@@ -37,60 +42,58 @@ class Query {
      * instead of emitting an injectable one. PREPARE_STATEMENT mode does not
      * need an escaper.
      */
-    public function setValueEscaper(callable $escaper) {
+    public function setValueEscaper(callable $escaper): self {
         $this->valueEscaper = $escaper;
 
         return $this;
     }
 
-    public function hasValueEscaper() {
+    public function hasValueEscaper(): bool {
         return $this->valueEscaper !== null;
     }
 
     /**
      * Opt in to an UPDATE or DELETE without a WHERE clause. Refused by default.
      */
-    public function allowUnscopedWrite($allow = true) {
-        $this->allowUnscopedWrite = (bool) $allow;
+    public function allowUnscopedWrite(bool $allow = true): self {
+        $this->allowUnscopedWrite = $allow;
 
         return $this;
     }
 
-    public function setTable($tableName) {
+    public function setTable(mixed $tableName): void {
         $this->tableName = $this->checkIdentifier($tableName, 'table name');
     }
 
-    final public function setCreateTableEngineType($EngineType) {
+    final public function setCreateTableEngineType(string $EngineType): void {
         $this->tableEngineType = $EngineType;
     }
 
-    final public function setCreateTableStructureSQL($sql) {
+    final public function setCreateTableStructureSQL(string $sql): void {
         $this->tableStructureSQL = $sql;
     }
 
-    public function setSelectField($fieldName) {
-        $nums = func_num_args();
-
-        if ($nums === 1) {
+    public function setSelectField(string $fieldName, string ...$moreFields): void {
+        if ($moreFields === []) {
             $this->selectFields[] = $fieldName;
-        } elseif ($nums > 1) {
-            $this->selectFields = array_merge($this->selectFields, func_get_args());
+        } else {
+            $this->selectFields = array_merge($this->selectFields, [$fieldName], $moreFields);
         }
     }
 
-    public function setUpdateField($fieldName, $value, $DataType) {
+    public function setUpdateField(string $fieldName, mixed $value, int $DataType): void {
         $this->updateFields[] = array($fieldName, $value, $DataType);
     }
 
-    public function setInsertField($fieldName, $value, $DataType) {
+    public function setInsertField(string $fieldName, mixed $value, int $DataType): void {
         $this->insertFields[] = array($fieldName, $value, $DataType);
     }
 
-    public function setConditionField($fieldName, $ConditionType, $value, $DataType, $AppenderOperator) {
+    public function setConditionField(string $fieldName, string $ConditionType, mixed $value, int $DataType, string $AppenderOperator): void {
         $this->conditionFields[] = array($fieldName, $ConditionType, $value, $DataType, $AppenderOperator);
     }
 
-    public function getQueryString($SqlStringType = \Mandryn\db\constant\SqlStringType::SQL_STRING) {
+    public function getQueryString(int $SqlStringType = \Mandryn\db\constant\SqlStringType::SQL_STRING): string {
         $this->sqlStringType = $SqlStringType;
 
         $sqlStatement = '';
@@ -118,7 +121,7 @@ class Query {
         return $sqlStatement;
     }
 
-    private function getCreateSQL() {
+    private function getCreateSQL(): string {
         $sqlStatement = "CREATE TABLE {$this->tableName} ENGINE={$this->tableEngineType} ";
 
         $sqlStatement.=$this->tableStructureSQL;
@@ -126,7 +129,7 @@ class Query {
         return $sqlStatement;
     }
 
-    private function getSelectSQL() {
+    private function getSelectSQL(): string {
         if (count($this->selectFields) === 0) {
             throw new \RuntimeException('SELECT query has no fields; call setSelectField() first.');
         }
@@ -146,7 +149,7 @@ class Query {
         return $sqlStatement;
     }
 
-    protected function getInsertSQL() {
+    protected function getInsertSQL(): string {
         $sqlStatement = "INSERT INTO {$this->tableName} ";
 
         $insertFieldsArray = [];
@@ -173,7 +176,7 @@ class Query {
         return $sqlStatement;
     }
 
-    protected function getUpdateSQL() {
+    protected function getUpdateSQL(): string {
         $updateFieldsArray = [];
 
         foreach ($this->updateFields as $fld) {
@@ -201,7 +204,7 @@ class Query {
         return $sqlStatement;
     }
 
-    protected function getDeleteSQL() {
+    protected function getDeleteSQL(): string {
         $conditionFieldsArray = $this->getConditionFieldsArray();
 
         $this->assertWriteIsScoped($conditionFieldsArray, 'DELETE');
@@ -218,8 +221,10 @@ class Query {
     /**
      * An UPDATE/DELETE with no WHERE clause is almost always a mistake, and a
      * silent one. Refuse it unless the caller has explicitly opted in.
+     *
+     * @param array<int, string> $conditionFieldsArray
      */
-    private function assertWriteIsScoped(array $conditionFieldsArray, $verb) {
+    private function assertWriteIsScoped(array $conditionFieldsArray, string $verb): void {
         if (count($conditionFieldsArray) === 0 && !$this->allowUnscopedWrite) {
             throw new \RuntimeException(
                 "Refusing to build a {$verb} without a WHERE clause. Add a condition, or call "
@@ -228,7 +233,10 @@ class Query {
         }
     }
 
-    protected function getConditionFieldsArray() {
+    /**
+     * @return array<int, string>
+     */
+    protected function getConditionFieldsArray(): array {
         $conditionFieldsArray = [];
 
         if ($this->sqlStringType === \Mandryn\db\constant\SqlStringType::SQL_STRING) {
@@ -240,7 +248,10 @@ class Query {
         return $conditionFieldsArray;
     }
 
-    private function getSqlStringConditionFieldsArray() {
+    /**
+     * @return array<int, string>
+     */
+    private function getSqlStringConditionFieldsArray(): array {
         $conditionFieldsArray = [];
 
         foreach ($this->conditionFields as $fld) {
@@ -258,7 +269,10 @@ class Query {
         return $conditionFieldsArray;
     }
 
-    private function getPreparedStatementConditionFieldsArray() {
+    /**
+     * @return array<int, string>
+     */
+    private function getPreparedStatementConditionFieldsArray(): array {
         $conditionFieldsArray = [];
         foreach ($this->conditionFields as $fld) {
             $appender = ($fld[4] === \Mandryn\db\constant\AppenderOperator::NONE_OPR) ? '' : ($fld[4] . ' ');
@@ -276,7 +290,7 @@ class Query {
     /**
      * Quote and escape a string value for SQL_STRING mode.
      */
-    private function quoteString($value, $fieldName = '') {
+    private function quoteString(mixed $value, string $fieldName = ''): string {
         if (!is_scalar($value) && $value !== null) {
             throw new \InvalidArgumentException(
                 'Expected a scalar value for field ' . ($fieldName === '' ? '(unknown)' : $fieldName)
@@ -301,7 +315,7 @@ class Query {
      * Accept integers and integer strings only. A declared INT field must never
      * be able to carry arbitrary SQL into the statement.
      */
-    private function toInteger($value, $fieldName = '') {
+    private function toInteger(mixed $value, string $fieldName = ''): int {
         if (is_int($value)) {
             return $value;
         }
@@ -324,7 +338,7 @@ class Query {
      * Column and table names must be plain identifiers, optionally backtick
      * quoted and optionally qualified (table.column).
      */
-    private function checkIdentifier($name, $what) {
+    private function checkIdentifier(mixed $name, string $what): string {
         if (!is_string($name) || preg_match('/^`?[A-Za-z_][A-Za-z0-9_]*`?(\.[A-Za-z_][A-Za-z0-9_]*$|$)/', $name) !== 1) {
             throw new \InvalidArgumentException(
                 'Invalid ' . $what . ': ' . (is_string($name) ? "'{$name}'" : get_debug_type($name)) . '.'
@@ -340,7 +354,7 @@ class Query {
      * identifiers. Statement separators, quotes, comment markers and control
      * characters are rejected instead.
      */
-    private function checkExpression($name, $what) {
+    private function checkExpression(mixed $name, string $what): string {
         if (!is_string($name) || $name === '' || preg_match('/[;\'"\x00-\x1F]|--|\/\*|\*\//', $name) === 1) {
             throw new \InvalidArgumentException(
                 'Invalid ' . $what . ': ' . (is_string($name) ? "'{$name}'" : get_debug_type($name)) . '.'

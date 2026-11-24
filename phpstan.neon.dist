@@ -1,0 +1,7 @@
+parameters:
+    level: 6
+    paths:
+        - src/db
+        - src/http
+        - src/mcp
+    tmpDir: .phpstan-cache

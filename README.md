@@ -24,13 +24,14 @@ composer require mandryn/mandryn:^5.0
 | `Mandryn\db` | `Query`, `DBQueryi` | SQL string building and low-level mysqli access |
 | `Mandryn\db\constant` | `QueryType`, `SqlStringType`, `DataType`, `ConditionType`, `AppenderOperator`, `EngineType` | Type-safe constants for the query builders |
 | `Mandryn\http` | `ConcurrentRequest`, `HttpUrl` | Parallel HTTP requests and URL helpers |
+| `Mandryn\Mcp` | `Server`, `ToolRegistry`, `SqlGuard`, `Tools\*`, `Connection\*` | MCP stdio server exposing DB/paging/fetch as agent tools |
 | *(global)* | `DBQuery`, `DBCommand`, `SQLQuery`, `DBQueryEZ`, `SQLQueryES` | Older-generation database convenience wrappers |
 | *(global)* | `UniversalPaging`, `PagingInfo`, `IPagingType`, `Pagination`, `Sorting`, `Searching` | Recordset paging and list controls |
 | *(global)* | `MagicInput`, `MagicObject`, `Field`, `FilterDefinition`, `TextLiteral`, `Utilities` | Request input, validation, and array/object helpers |
 | *(global)* | `Login`, `User` | Authentication and user loading |
 | *(global)* | `Checkbox`, `Radio`, `RadioCheckBox`, `Select` | HTML form controls |
 
-Classes under `src/mandryn_v1/` are autoloaded into the **global namespace** (that is the historical convention this library ships with); everything under `src/db/` and `src/http/` is namespaced.
+Classes under `src/mandryn_v1/` are autoloaded into the **global namespace** (that is the historical convention this library ships with); everything under `src/db/`, `src/http/`, and `src/mcp/` is namespaced. The MCP server runs from `bin/mandryn-mcp`. See [docs/architecture.md](docs/architecture.md) for the full class map.
 
 ## Paging in one page
 
@@ -77,14 +78,30 @@ Blind mode is the one to reach for when the data set is large and nobody has rig
 
 Full details, caveats, and the complete API surface live in **[docs/UniversalPaging.md](docs/UniversalPaging.md)**. A runnable JSON endpoint lives in [`examples/paging-manual.php`](examples/paging-manual.php), with a Vue 3 pager in [`examples/UserPager.vue`](examples/UserPager.vue).
 
+## MCP server (for AI agents)
+
+`bin/mandryn-mcp` exposes Mandryn's database, paging, and HTTP capabilities as
+MCP tools for AI agents (MiniMax Code, Cursor, Claude Desktop, etc.):
+
+| Tool | Purpose |
+|---|---|
+| `mandryn_schema` | Introspect tables and columns |
+| `mandryn_query` | Run a single SQL statement (read-only unless `--allow-writes`) |
+| `mandryn_page` | Page a SELECT via `UniversalPaging` |
+| `mandryn_fetch` | Fetch an http/https URL |
+
+Read-only by default; write statements require `--allow-writes`. See
+**[docs/MCP.md](docs/MCP.md)** for configuration and client setup.
+
 ## Running the tests
 
 ```bash
 composer install
-composer test
+composer test      # PHPUnit suite (DB-free)
+composer analyse   # PHPStan: level 6 (modern) + baselined legacy
 ```
 
-The suite is configured in `phpunit.xml.dist`; copy it to `phpunit.xml` if you need a local override. CI runs the same command on PHP 8.3 and 8.4.
+The suite is configured in `phpunit.xml.dist`; copy it to `phpunit.xml` if you need a local override. CI runs the same commands on PHP 8.3 and 8.4.
 
 ## Versioning
 

@@ -63,14 +63,16 @@
         "guzzlehttp/guzzle": "^7.8 || ^8.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.5",
-        "phpunit/php-timer": "^6.0"
+        "phpstan/phpstan": "^2.0",
+        "phpunit/php-timer": "^6.0",
+        "phpunit/phpunit": "^10.5"
     },
     "autoload": {
         "psr-4": {
             "Mandryn\\db\\": "src/db/",
             "Mandryn\\db\\constant\\": "src/db/constant/",
-            "Mandryn\\http\\": "src/http/"
+            "Mandryn\\http\\": "src/http/",
+            "Mandryn\\Mcp\\": "src/mcp/"
         },
         "classmap": [
             "src/mandryn_v1/"
@@ -81,8 +83,12 @@
             "Tests\\": "tests/"
         }
     },
+    "bin": [
+        "bin/mandryn-mcp"
+    ],
     "scripts": {
-        "test": "phpunit"
+        "test": "@php vendor/bin/phpunit",
+        "analyse": "@php vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress && @php vendor/bin/phpstan analyse -c phpstan.legacy.neon --no-progress"
     },
     "config": {
         "sort-packages": true
