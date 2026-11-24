@@ -87,8 +87,8 @@
         "bin/mandryn-mcp"
     ],
     "scripts": {
-        "test": "phpunit",
-        "analyse": "phpstan analyse -c phpstan.neon.dist --no-progress && phpstan analyse -c phpstan.legacy.neon --no-progress"
+        "test": "@php vendor/bin/phpunit",
+        "analyse": "@php vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress && @php vendor/bin/phpstan analyse -c phpstan.legacy.neon --no-progress"
     },
     "config": {
         "sort-packages": true
