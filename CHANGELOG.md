@@ -10,6 +10,37 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-11-24
+
+The behaviour changes in this release are breaking because the previous
+behaviour was unsafe: `SQL_STRING` statements could be built with unescaped
+values, and an `UPDATE`/`DELETE` with no conditions produced invalid SQL.
+Consumers that already escape their values before calling the builder, or that
+use `PREPARE_STATEMENT` mode, are unaffected.
+
+### Security
+
+- **Breaking:** `Mandryn\db\Query` no longer interpolates unescaped string
+  values in `SQL_STRING` mode. Call `setValueEscaper()` with the connection's
+  `escape_string` routine; without one the builder refuses to emit the statement
+  instead of emitting an injectable one. `PREPARE_STATEMENT` mode is unaffected
+  and still needs no escaper.
+- Fields declared as `DataType::INT` are validated as integers, so the type flag
+  can no longer carry arbitrary SQL into the statement.
+- Table and column names are validated before use.
+- **Breaking:** `UPDATE` and `DELETE` without a `WHERE` clause are refused unless
+  `allowUnscopedWrite(true)` is called explicitly.
+- `Pagination::paging()` escapes everything it reflects into HTML and no longer
+  creates global variables from request keys. This closes a reflected XSS and a
+  variable-variable injection in the same block.
+
+### Fixed
+
+- The query builder no longer appends a dangling `WHERE` when a query has no
+  conditions.
+- `setSelectField()` accepts several field arguments again; a `$num`/`$nums` typo
+  left the multi-argument form silently doing nothing.
+
 ## [4.0.0] - 2026-11-24
 
 This release restarts the version line at 4.0.0 so the project leaves behind its
@@ -118,7 +149,8 @@ change. From here the series continues `4.0.x` → `4.1.0` → `5.0.0`.
 
 - Initial release of `UniversalPaging`, the abstract recordset paginator.
 
-[Unreleased]: https://github.com/ilham-fuead/mandryn/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/ilham-fuead/mandryn/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/ilham-fuead/mandryn/compare/v4.0.0...v5.0.0
 [4.0.0]: https://github.com/ilham-fuead/mandryn/compare/v2.0.2...v4.0.0
 [2.0.2]: https://github.com/ilham-fuead/mandryn/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/ilham-fuead/mandryn/compare/v2.0.0...v2.0.1

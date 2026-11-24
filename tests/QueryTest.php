@@ -12,6 +12,17 @@ use PHPUnit\Framework\TestCase;
 
 class QueryTest extends TestCase
 {
+    /**
+     * Stand-in for the connection's escape_string routine. Deployments must
+     * pass the real mysqli-based escaper; tests only need a deterministic one.
+     */
+    private function sqlStringEscaper(): callable
+    {
+        return static function ($value) {
+            return str_replace("'", "''", $value);
+        };
+    }
+
     public function testGetQueryString_InsertPreparedStatement_CorrectSql()
     {
         $query = new Query(QueryType::INSERT);
@@ -29,6 +40,7 @@ class QueryTest extends TestCase
     {
         $query = new Query(QueryType::INSERT);
         $query->setTable('users');
+        $query->setValueEscaper($this->sqlStringEscaper());
         $query->setInsertField('name', 'John Doe', DataType::STR);
         $query->setInsertField('email', 'john.doe@example.com', DataType::STR);
         $query->setInsertField('age', 30, DataType::INT);
@@ -43,6 +55,7 @@ class QueryTest extends TestCase
     {
         $query = new Query(QueryType::UPDATE);
         $query->setTable('users');
+        $query->setValueEscaper($this->sqlStringEscaper());
         $query->setUpdateField('name', 'Jane Doe', DataType::STR);
         $query->setUpdateField('age', 31, DataType::INT);
         $query->setConditionField('id', ConditionType::EQUAL, 1, DataType::INT, AppenderOperator::NONE_OPR);
@@ -71,6 +84,7 @@ class QueryTest extends TestCase
     {
         $query = new Query(QueryType::UPDATE);
         $query->setTable('users');
+        $query->setValueEscaper($this->sqlStringEscaper());
         $query->setUpdateField('status', 'inactive', DataType::STR);
         $query->setConditionField('age', ConditionType::GREATER_THAN, 30, DataType::INT, AppenderOperator::NONE_OPR);
         $query->setConditionField('name', ConditionType::LIKE, '%Doe', DataType::STR, AppenderOperator::AND_OPR);

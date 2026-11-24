@@ -267,35 +267,56 @@
  * @return Void echo <b>javascript</b> code dan <b>html</b> untuk paparan paging
  * @param Object $myPagination - Object Pagination ini sendiri.
  */
+    /**
+     * Reads one of the known paging keys without writing to the global scope.
+     * A value recalculated by initPaging() is published as a global, so that
+     * takes precedence over the posted copy.
+     */
+    private function currentRequestValue($key)
+    {
+        if (isset($GLOBALS[$key]) && $GLOBALS[$key] !== '') {
+            return $GLOBALS[$key];
+        }
+
+        return isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
+    }
+
         public function paging( $myPagination )
         {
-           echo '<form action="'.$_SERVER['PHP_SELF'].'" method="POST" name="frmPagination">';
-           $pgVar = array('linkPagination','flo','bil','ceil');
-                //echo '<input type="hidden" name="linkPagination">';
-                if(!array_key_exists('flo',$_POST))
-                    foreach ($pgVar AS $kunci)
-                    {
-                        global ${$kunci};
-                        echo '<input type="hidden" name="'.$kunci.'" value="'.${$kunci}.'">';
-                    }
+            $escapeHtml = static function ($value) {
+                return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            };
 
-                foreach (array_keys($_REQUEST) AS $kunci)
-                {
-                    if(strstr($kunci,'btn') == false)
-                    {
-                        global ${$kunci};
-                        if(array_search($kunci, $pgVar) == NULL)
-                            ${$kunci} = $_REQUEST[$kunci];
-                        echo '<input type="hidden" name="'.$kunci.'" value="'.${$kunci}.'">';
-                    }
+            $selfUrl = $escapeHtml(isset($_SERVER['PHP_SELF']) ? $_SERVER['PHP_SELF'] : '');
+
+            // Kept as locals so the link builders below still receive them, but
+            // never created as globals from request input.
+            $pgVar = array('linkPagination', 'flo', 'bil', 'ceil');
+            $flo = $this->currentRequestValue('flo');
+            $bil = $this->currentRequestValue('bil');
+
+            echo '<form action="' . $selfUrl . '" method="POST" name="frmPagination">';
+
+            if (!array_key_exists('flo', $_POST)) {
+                foreach ($pgVar AS $kunci) {
+                    echo '<input type="hidden" name="' . $escapeHtml($kunci) . '" value="' . $escapeHtml($this->currentRequestValue($kunci)) . '">';
                 }
+            }
+
+            foreach (array_keys($_REQUEST) AS $kunci) {
+                if (strstr((string) $kunci, 'btn') !== false || in_array($kunci, $pgVar, true)) {
+                    continue;
+                }
+
+                echo '<input type="hidden" name="' . $escapeHtml($kunci) . '" value="' . $escapeHtml($_REQUEST[$kunci]) . '">';
+            }
 
             echo '</form>';
 
             echo '<script type="text/javascript" language="javascript">
                         function goTo (n) {
                             document.frmPagination.linkPagination.value = n;
-                            document.frmPagination.action = "'.$_SERVER['PHP_SELF'].'";
+                            document.frmPagination.action = "' . $selfUrl . '";
                             document.frmPagination.submit();
                         }    
             </script>';
