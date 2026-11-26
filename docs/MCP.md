@@ -47,8 +47,8 @@ the DB tools return a descriptive "database not configured" error.
 - **Read-only by default.** `INSERT`/`UPDATE`/`DELETE`/`DDL` are refused
   unless the server is started with `--allow-writes`. `mandryn_page` is always
   read-only regardless of the flag.
-- **Single statement only.** `SqlGuard` rejects multi-statement SQL and
-  strips leading comments before classifying.
+- **Query plans.** `EXPLAIN <statement>` is classified as a read and runs through
+  `mandryn_query`, so agents can inspect execution plans without a separate tool.
 - **Values via placeholders.** `mandryn_query` binds `?` placeholders as a
   prepared statement. `mandryn_page` escapes positional `?` params with
   `mysqli_real_escape_string` (UniversalPaging has no bound-parameter
