@@ -10,6 +10,14 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
+## [6.0.6] - 2026-11-26
+
+### Added
+
+- MCP resources support: `resources/list` and `resources/read`, exposing
+  `architecture.md`, `UniversalPaging.md`, `MCP.md`, and `MIGRATION.md` to
+  agents in-session.
+
 ## [6.0.5] - 2026-11-26
 
 ### Added
