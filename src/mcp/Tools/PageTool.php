@@ -35,10 +35,11 @@ final class PageTool implements Tool
 
     public function description(): string
     {
-        return 'Page through the rows of a SELECT using Mandryn UniversalPaging (MANUAL mode). '
+        return 'Page through the rows of a SELECT using a prepared statement (LIMIT/OFFSET). '
             . 'Returns one page plus totals (total row count comes from a wrapped COUNT(*) query). '
-            . 'Always read-only, even under --allow-writes. Positional ? parameters are escaped '
-            . 'into the statement (UniversalPaging has no bound-parameter support); named '
+            . 'Always read-only, even under --allow-writes. Column values are returned with their '
+            . 'native PDO types (not stringified). Positional ? parameters are interpolated '
+            . '(escaped) since UniversalPaging has no bound-parameter support; named '
             . 'placeholders are not supported. The SQL must not contain its own LIMIT, and '
             . 'CTEs are not supported.';
     }
@@ -150,14 +151,19 @@ final class PageTool implements Tool
         $totalPages = max(1, (int) ceil($total / $pageSize));
         $page = max(1, min($page, $totalPages));
 
-        $config = $this->connection->getConfig();
-        $factory = $this->pagerFactory ?? $this->defaultPagerFactory();
-        $rows = $factory([
-            'host' => $config->hostForMysqli(),
-            'user' => $config->user,
-            'password' => $config->password,
-            'name' => $config->name,
-        ], $sql, $page, $pageSize, $total, $totalPages);
+        if ($this->pagerFactory !== null) {
+            $config = $this->connection->getConfig();
+            $factory = $this->pagerFactory;
+            $rows = $factory([
+                'host' => $config->hostForMysqli(),
+                'user' => $config->user,
+                'password' => $config->password,
+                'name' => $config->name,
+            ], $sql, $page, $pageSize, $total, $totalPages);
+        } else {
+            $offset = ($page - 1) * $pageSize;
+            $rows = $this->connection->queryRows($sql . ' LIMIT ' . $offset . ', ' . $pageSize);
+        }
 
         return [
             'page' => $page,
@@ -197,59 +203,5 @@ final class PageTool implements Tool
 
         return $sql;
     }
-
-    /**
-     * The real pager: UniversalPaging in MANUAL mode, with totals supplied via
-     * setPageProperty so no COUNT(*) runs inside the legacy code path.
-     *
-     * @return callable(array{host: string, user: string, password: string, name: string}, string, int, int, int, int): list<array<string, mixed>>
-     */
-    private function defaultPagerFactory(): callable
-    {
-        return function (array $connectionDetail, string $sql, int $page, int $pageSize, int $total, int $totalPages): array {
-            $dbQuery = new \DBQuery(
-                $connectionDetail['host'],
-                $connectionDetail['user'],
-                $connectionDetail['password'],
-                $connectionDetail['name'],
-            );
-
-            // UniversalPaging's constructor takes the DBQuery it derives its
-            // connection detail from; the anonymous collector has no own
-            // constructor, so the DBQuery must be passed here.
-            $collector = new class($dbQuery) extends \UniversalPaging {
-                /** @var list<array<string, mixed>> */
-                public array $collected = [];
-
-                /**
-                 * @param int $startRowIndex
-                 * @param int $lastRowIndex
-                 */
-                protected function performTaskOnEachPage(\DBQuery $DBQueryObj, $startRowIndex, $lastRowIndex): void
-                {
-                    $result = $DBQueryObj->getQueryResult();
-                    while (is_array($row = mysqli_fetch_assoc($result))) {
-                        $this->collected[] = $row;
-                    }
-                }
-
-                protected function handleTaskOnNoPaging(): void
-                {
-                    // no rows to collect
-                }
-            };
-
-            $collector->setSQLStatement($sql);
-            $collector->setPagingProperty(\IPagingType::MANUAL, $pageSize, false, false);
-
-            $pagingInfo = new \PagingInfo();
-            $pagingInfo->totalRow = $total;
-            $pagingInfo->totalPage = $totalPages;
-            $collector->setPageProperty($pagingInfo);
-
-            $collector->startPaging($page);
-
-            return $collector->collected;
-        };
-    }
 }
+

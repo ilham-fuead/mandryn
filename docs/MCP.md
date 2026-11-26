@@ -63,10 +63,8 @@ the DB tools return a descriptive "database not configured" error.
 - Because the legacy `DBQuery` error path calls `exit()`, the SQL is
   pre-validated on the MCP connection before paging runs. A malformed
   statement returns a tool error instead of terminating the server.
-- Column values come back as **strings** (UniversalPaging reads through a
-  non-prepared `mysqli` result). `mandryn_query` uses a prepared statement and
-  returns native types, so the same column may be `"4"` from `mandryn_page`
-  but `4` from `mandryn_query`.
+- Column values come back with their **native PDO types** (as of 6.0.8). Previously
+  `mandryn_page` read through `UniversalPaging` (mysqli) and returned strings.
 
 ## Connecting an MCP client
 
