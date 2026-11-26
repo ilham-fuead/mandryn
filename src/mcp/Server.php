@@ -4,14 +4,19 @@ namespace Mandryn\Mcp;
 
 final class Server
 {
-    /** @var resource|null */
+    /** @var mixed */
     private $input;
-    /** @var resource|null */
+    /** @var mixed */
     private $output;
 
     /**
      * @param resource|null $input  stream to read JSON-RPC lines from (defaults to STDIN)
      * @param resource|null $output stream to write JSON-RPC lines to (defaults to STDOUT)
+     */
+    /**
+     * @param mixed $input
+     * @param mixed $output
+     * @param list<\Mandryn\Mcp\Resource> $resources
      */
     public function __construct(
         private readonly ToolRegistry $registry,
@@ -19,6 +24,7 @@ final class Server
         private readonly string $version = '0.1.0',
         $input = null,
         $output = null,
+        private readonly array $resources = [],
     ) {
         $this->input = $input;
         $this->output = $output;
@@ -73,7 +79,10 @@ final class Server
             case 'initialize':
                 $this->writeResult($id, [
                     'protocolVersion' => '2024-11-05',
-                    'capabilities' => ['tools' => new \stdClass()],
+                    'capabilities' => [
+                        'tools' => new \stdClass(),
+                        'resources' => new \stdClass(),
+                    ],
                     'serverInfo' => ['name' => $this->name, 'version' => $this->version],
                 ]);
                 return;
@@ -92,6 +101,34 @@ final class Server
                     ];
                 }
                 $this->writeResult($id, ['tools' => $tools]);
+                return;
+
+            case 'resources/list':
+                $resources = [];
+                foreach ($this->resources as $resource) {
+                    $resources[] = $resource->toArray();
+                }
+                $this->writeResult($id, ['resources' => $resources]);
+                return;
+
+            case 'resources/read':
+                $uri = is_string($params['uri'] ?? null) ? $params['uri'] : '';
+                foreach ($this->resources as $resource) {
+                    if ($resource->uri === $uri) {
+                        $content = @file_get_contents($resource->path);
+                        $this->writeResult($id, [
+                            'contents' => [
+                                [
+                                    'uri' => $resource->uri,
+                                    'mimeType' => $resource->mimeType,
+                                    'text' => $content === false ? '' : $content,
+                                ],
+                            ],
+                        ]);
+                        return;
+                    }
+                }
+                $this->writeError($id, -32602, 'Unknown resource: ' . $uri);
                 return;
 
             case 'tools/call':

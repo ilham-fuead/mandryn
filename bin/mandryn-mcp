@@ -32,6 +32,7 @@ use Mandryn\Mcp\Connection\DbConfig;
 use Mandryn\Mcp\Connection\DbConnection;
 use Mandryn\Mcp\Connection\MysqliDbConnection;
 use Mandryn\Mcp\Connection\UnconfiguredDbConnection;
+use Mandryn\Mcp\Resource;
 use Mandryn\Mcp\Server;
 use Mandryn\Mcp\SqlGuard;
 use Mandryn\Mcp\ToolRegistry;
@@ -59,7 +60,14 @@ $tools = [
     new FetchTool(),
 ];
 
-$server = new Server(new ToolRegistry($tools), 'mandryn', '0.1.0');
+$resources = [
+    new Resource('mandryn://docs/architecture', 'architecture.md', 'Class map and layer overview', 'text/markdown', dirname(__DIR__) . '/docs/architecture.md'),
+    new Resource('mandryn://docs/paging', 'UniversalPaging.md', 'Paging manual and API surface', 'text/markdown', dirname(__DIR__) . '/docs/UniversalPaging.md'),
+    new Resource('mandryn://docs/mcp', 'MCP.md', 'MCP server guide', 'text/markdown', dirname(__DIR__) . '/docs/MCP.md'),
+    new Resource('mandryn://docs/migration', 'MIGRATION.md', 'Legacy to modern migration guide', 'text/markdown', dirname(__DIR__) . '/docs/MIGRATION.md'),
+];
+
+$server = new Server(new ToolRegistry($tools), 'mandryn', '0.1.0', null, null, $resources);
 $server->run();
 
 /**

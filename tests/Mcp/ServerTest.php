@@ -177,7 +177,7 @@ final class ServerTest extends TestCase
     public function testUnknownMethodReturnsMethodNotFound(): void
     {
         $responses = $this->runServer(
-            ['{"jsonrpc":"2.0","id":6,"method":"resources/list","params":{}}'],
+            ['{"jsonrpc":"2.0","id":6,"method":"foo/bar","params":{}}'],
             new ToolRegistry([]),
         );
 
