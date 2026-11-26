@@ -75,6 +75,9 @@
         },
         "classmap": [
             "src/mandryn_v1/"
+        ],
+        "files": [
+            "src/legacy/aliases.php"
         ]
     },
     "autoload-dev": {
