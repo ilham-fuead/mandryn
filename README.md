@@ -1,6 +1,6 @@
 # mandryn
 
-**Matured & Agile Norms and DRY Approach Indefinitely (n<sup>th</sup>)** — a PHP component library for database access, recordset paging, request input handling, and form controls.
+**Matured & Agile Norms and DRY Approach Indefinitely (n<sup>th</sup>)** — a PHP library for two jobs most frameworks don't do well: **(1) paging large, untuned MySQL/MariaDB tables without `COUNT(*)`**, and **(2) exposing that capability to AI agents over MCP**. It's small on purpose — zero framework weight — but that's a side effect, not the pitch.
 
 [![tests](https://github.com/ilham-fuead/mandryn/actions/workflows/tests.yml/badge.svg)](https://github.com/ilham-fuead/mandryn/actions/workflows/tests.yml)
 [![phpstan](https://img.shields.io/badge/phpstan-level%206%20%2B%203-blue.svg)](https://phpstan.org)
@@ -8,7 +8,18 @@
 [![php](https://img.shields.io/badge/php-%3E%3D8.3.6-777bb4.svg)](composer.json)
 [![packagist](https://img.shields.io/packagist/v/mandryn/mandryn.svg)](https://packagist.org/packages/mandryn/mandryn)
 
-## What problems it solves
+## When NOT to use mandryn
+
+- You want a query builder / ORM / validator / router / HTTP framework — use **Doctrine DBAL**, **Symfony components**, or **Laravel**. mandryn is not competing with those; it's narrower.
+- You're starting a greenfield multi-developer product with no legacy MySQL codebase — reach for a mainstream framework instead.
+- You need cursor/keyset pagination with strict type safety across multiple drivers — mandryn's pager is `mysqli`-centric (PDO abstraction is on the roadmap).
+
+## When mandryn is the right tool
+
+- You have a large, append-only MySQL/MariaDB table and nobody has rights to tune it: `UniversalPaging`'s **blind mode** pages it with bounded `LIMIT`s and no `COUNT(*)`.
+- You want to drop paging/DB helpers into an existing procedural or legacy PHP codebase without adopting a framework.
+- You want a **read-only MCP stdio server** (`bin/mandryn-mcp`) so AI agents can introspect schema, page data, and fetch URLs against your DB.
+- You value zero external bloat, DB-free tests, and static analysis on both layers.
 
 - **Paging large recordsets** without writing `LIMIT`/`COUNT(*)` boilerplate — `UniversalPaging` handles page maths, slicing, and optional in-memory caching.
 - **Building SQL safely** with a typed query builder (`Mandryn\db\Query`) instead of string concatenation.
@@ -36,11 +47,11 @@ composer require mandryn/mandryn:^6.0
 | Constants | `Mandryn\db\constant` | `QueryType`, `DataType`, `ConditionType`, `AppenderOperator`, `SqlStringType`, `EngineType` | Type-safe constants for the query builders |
 | HTTP | `Mandryn\http` | `ConcurrentRequest`, `HttpUrl`, `MagicInput` | Parallel HTTP requests, URL helpers, decoupled input validation |
 | MCP | `Mandryn\Mcp` | `Server`, `ToolRegistry`, `SqlGuard`, `Tools\*`, `Connection\*` | MCP stdio server exposing DB/paging/fetch as agent tools |
-| Database (legacy) | *(global)* | `DBQuery`, `DBCommand`, `SQLQuery`, `DBQueryEZ`, `SQLQueryES` | Older-generation database convenience wrappers |
+| Database (legacy) | *(global)* | `DBQuery`, `DBCommand`, `SQLQuery`, `DBQueryEZ`, `SQLQueryES` | Older-generation DB wrappers — **frozen**, maintenance only |
 | Paging (legacy) | *(global)* | `UniversalPaging`, `PagingInfo`, `IPagingType`, `Pagination`, `Sorting`, `Searching` | Recordset paging and list controls |
-| Input/helpers (legacy) | *(global)* | `MagicInput`, `MagicObject`, `Field`, `FilterDefinition`, `TextLiteral`, `Utilities` | Request input, validation, array/object helpers |
-| Auth (legacy) | *(global)* | `Login`, `User` | Authentication and user loading |
-| Forms (legacy) | *(global)* | `Checkbox`, `Radio`, `RadioCheckBox`, `Select` | HTML form controls |
+| Input/helpers (legacy) | *(global)* | `MagicInput`, `MagicObject`, `Field`, `FilterDefinition`, `TextLiteral`, `Utilities` | Request input, validation, helpers — **frozen** |
+| Auth (legacy) | *(global)* | `Login`, `User` | Authentication — **frozen** |
+| Forms (legacy) | *(global)* | `Checkbox`, `Radio`, `RadioCheckBox`, `Select` | HTML form controls — **frozen** |
 
 Classes under `src/mandryn_v1/` are autoloaded into the **global namespace** (historical convention); everything under `src/db/`, `src/http/`, and `src/mcp/` is namespaced. See [docs/architecture.md](docs/architecture.md) for the full class map.
 
