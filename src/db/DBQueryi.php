@@ -11,8 +11,8 @@ class DBQueryi {
     private array $paramFields = [];
     public int $affectedRow = 0;
 
-    public function __construct(string $host, string $username, string $password, string $database_name) {
-        $dsn = "mysql:host={$host};dbname={$database_name};port=3306;charset=utf8";
+    public function __construct(string $host, string $username, string $password, string $database_name, int $port = 3306) {
+        $dsn = "mysql:host={$host};dbname={$database_name};port={$port};charset=utf8";
         $this->pdoObj = new \PDO($dsn, $username, $password);
         $this->pdoObj->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     }
@@ -94,8 +94,7 @@ class DBQueryi {
             }
             return $this->statementObj->execute();
         } catch (\PDOException $e) {
-            print $e->getMessage();
-            return null;
+            throw new \RuntimeException('Database error: ' . $e->getMessage(), 0, $e);
         }
     }
 
