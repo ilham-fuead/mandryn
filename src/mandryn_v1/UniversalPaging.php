@@ -54,6 +54,7 @@ abstract class UniversalPaging implements IPagingType
     private $pagingInfoObj;
     private $pageDelayInSecond;
     private $sqlStatement;
+    private array $sqlParams = [];
     protected $mixedDataTypeArray;
     private $useMemoryTable;
     private $useBlindMode;
@@ -85,9 +86,53 @@ abstract class UniversalPaging implements IPagingType
         return $this->pagingInfoObj;
     }
 
-    public function setSQLStatement($sqlStatement)
+    public function setSQLStatement($sqlStatement, array $params = [])
     {
         $this->sqlStatement = $sqlStatement;
+        $this->sqlParams = array_values($params);
+    }
+
+    /**
+     * Escape and interpolate positional ? params into $sql using the mysqli
+     * link derived from $connectionDetail. Mirrors PageTool::interpolateParams.
+     *
+     * @param string $sql
+     * @param array $params
+     * @param ConnectionDetail $connectionDetail
+     * @return string
+     */
+    private function interpolateParams($sql, array $params, $connectionDetail)
+    {
+        $link = mysqli_connect($connectionDetail->host, $connectionDetail->username, $connectionDetail->password, $connectionDetail->database_name);
+        $offset = 0;
+        foreach ($params as $param) {
+            $position = strpos($sql, '?', $offset);
+            if ($position === false) {
+                if ($link) {
+                    mysqli_close($link);
+                }
+                throw new Exception('param count mismatch while interpolating values');
+            }
+            if ($param === null) {
+                $literal = 'NULL';
+            } elseif (is_int($param) || is_float($param)) {
+                $literal = (string) $param;
+            } elseif (is_string($param) || is_bool($param)) {
+                $value = is_bool($param) ? ($param ? '1' : '0') : $param;
+                $literal = "'" . ($link ? mysqli_real_escape_string($link, $value) : addslashes($value)) . "'";
+            } else {
+                if ($link) {
+                    mysqli_close($link);
+                }
+                throw new Exception('unsupported param type: ' . get_debug_type($param));
+            }
+            $sql = substr_replace($sql, $literal, $position, 1);
+            $offset = $position + strlen($literal);
+        }
+        if ($link) {
+            mysqli_close($link);
+        }
+        return $sql;
     }
 
     public function setUseTmpMemEng($use = true)
@@ -120,6 +165,13 @@ abstract class UniversalPaging implements IPagingType
         }
         $this->pagePropertyInitialized = true;
         $conn = $this->connectionDetailObj;
+
+        // Interpolate positional ? params into the SQL up front (escaped via the
+        // connection's mysqli link), so all downstream statements see final SQL.
+        if ($this->sqlParams !== []) {
+            $this->sqlStatement = $this->interpolateParams($this->sqlStatement, $this->sqlParams, $conn);
+            $this->sqlParams = [];
+        }
 
         $DBQueryObj = new DBQuery($conn->host, $conn->username, $conn->password, $conn->database_name);
 
