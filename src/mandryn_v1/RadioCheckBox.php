@@ -90,6 +90,7 @@
 
             if ( sizeof( $this->rc_options ) > 0 )
             {
+                $i = 0;
                 foreach ( $this->rc_options as $option )
                 {
                     if( $checkBoxOrRadio == 'C' )

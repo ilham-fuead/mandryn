@@ -282,7 +282,7 @@ abstract class UniversalPaging implements IPagingType
     {
         //TODO: (Method) Clear memory table
 
-        if (substr_compare($memTableName, TBL_NAME_PREPEND, 0, 8) === 0) {
+        if (substr_compare($memTableName, self::TBL_NAME_PREPEND, 0, 8) === 0) {
             $cmdSql = "DROP TABLE {$memTableName};";
             $ok = $this->executeTableLevelCommand($DBQueryObj, $cmdSql, 'Error clean up mem engine');
         }

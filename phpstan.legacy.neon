@@ -2,7 +2,9 @@ includes:
     - phpstan-legacy-baseline.neon
 
 parameters:
-    level: 0
+    level: 3
     paths:
         - src/mandryn_v1
     tmpDir: .phpstan-cache
+    universalObjectCratesClasses:
+        - MagicObject

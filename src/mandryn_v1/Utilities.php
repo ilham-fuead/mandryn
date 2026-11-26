@@ -151,7 +151,7 @@ class Utilities {
  * @access Public Static
  * @author Rizuwan <rizuwan.saar@jpa.gov.my>
  * @return String date format. Ex: "Sabtu"
- * @param date $date date() if not set
+ * @param int|string $date date() if not set
  * @param int $type "<b>1</b>" will return <b>Sabtu</b><br>"<b>2</b>" will return <b>Sab</b>
  */
     public static function namaHari($date = 0, $type = 1)

@@ -354,8 +354,7 @@
  * Penyataan/method ini perlu ditulis di bawah declaration objek Pagination dimana objek tersebut perlu dideclare selepas pernyataan $dbQueryObj->runSQLquery()
  * @access Public
  * @author Rizuwan <rizuwan.saar@jpa.gov.my>
- * @return Object $DBQuery Objek DBQuery
- * @return Object $myPagination Objek Pagination
+ * @return array<int, mixed>
  * @param Object $myPagination Objek Pagination ini sendiri
  * @param Object $DBQuery Objek DBQuery yang telah dideclare
  * @param String $SQLquery Query SQL, bukannya Objek SQLquery
