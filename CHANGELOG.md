@@ -10,7 +10,15 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
-## [6.0.3] - 2026-11-24
+## [6.0.4] - 2026-11-26
+
+### Fixed
+
+- `DBQuery::runSQL_Query()` no longer calls `header()` + `exit()` on a failed
+  query; it re-throws the `Exception` so long-running hosts (MCP server,
+  workers, daemons) can catch and handle DB errors instead of being killed.
+  Web callers that relied on the implicit HTTP 500 should catch the exception
+  and render their own response.
 
 ### Fixed
 

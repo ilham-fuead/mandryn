@@ -195,9 +195,11 @@ class DBQuery extends DB
                 $this->commandType = "query";
                 $this->num_rows= mysqli_num_rows($this->db_result);
             }
-        }catch (Exception $e) {
-            header("{$_SERVER['SERVER_PROTOCOL']} 500 {$e->getMessage()}");
-            exit;
+        } catch (Exception $e) {
+            // Never terminate the process here: long-running hosts (MCP server,
+            // workers) must be able to catch and handle the failure. Re-throw so
+            // callers can decide how to react.
+            throw $e;
         }
     }
 

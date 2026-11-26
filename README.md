@@ -3,6 +3,7 @@
 **Matured & Agile Norms and DRY Approach Indefinitely (n<sup>th</sup>)** — a PHP component library for database access, recordset paging, request input handling, and form controls.
 
 [![tests](https://github.com/ilham-fuead/mandryn/actions/workflows/tests.yml/badge.svg)](https://github.com/ilham-fuead/mandryn/actions/workflows/tests.yml)
+[![analyse](https://github.com/ilham-fuead/mandryn/actions/workflows/tests.yml/badge.svg)](https://github.com/ilham-fuead/mandryn/actions/workflows/tests.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![php](https://img.shields.io/badge/php-%3E%3D8.3.6-777bb4.svg)](composer.json)
 
