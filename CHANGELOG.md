@@ -10,7 +10,27 @@ per-commit history is available via `git log`.
 
 ## [Unreleased]
 
-## [6.0.4] - 2026-11-26
+## [6.0.5] - 2026-11-26
+
+### Added
+
+- `UniversalPaging::setSQLStatement()` now accepts an optional positional
+  params array (escaped via the connection's mysqli link).
+- `DBQueryi` constructor accepts an optional port (default 3306).
+- `docs/MIGRATION.md` migration guide; `docs/adr/0001-...` ADR.
+- `SECURITY.md` and GitHub issue/PR templates.
+
+### Changed
+
+- README rewritten with module index, quick-start snippets, and badge row.
+- Legacy PHPStan raised from level 0 to level 3 (clean).
+- `docs/MCP.md` documents EXPLAIN via `mandryn_query`.
+
+### Fixed
+
+- `DBQuery::runSQL_Query()` no longer calls `header()` + `exit()`.
+- `DBQueryi::execute()` no longer prints PDO errors to stdout.
+- `DBQueryi` stdout-safe for MCP/agent use.
 
 ### Fixed
 
